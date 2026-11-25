@@ -92,6 +92,8 @@ async function checkSingleUrl(url) {
 function verifyAssets() {
   const expectedAssets = [
     { rel: 'public/og-image.png', w: 1200, h: 630 },
+    { rel: 'public/favicon-32x32.png', w: 32, h: 32 },
+    { rel: 'public/apple-touch-icon.png', w: 180, h: 180 },
     { rel: 'launch-assets/profile/avatar-800x800.png', w: 800, h: 800 },
     { rel: 'launch-assets/profile/x-banner-1500x500.png', w: 1500, h: 500 },
     { rel: 'launch-assets/profile/youtube-banner-2560x1440.png', w: 2560, h: 1440 },
@@ -104,6 +106,8 @@ function verifyAssets() {
     '04-nordvpn-scam-kit.png',
     '05-fake-apk-oauth.png',
     '06-4-step-containment.png',
+    '07-thread2-cookie-hijacking.png',
+    '08-thread2-readonly-paths.png',
   ];
   for (const name of xCards) {
     expectedAssets.push({ rel: `launch-assets/x-cards/${name}`, w: 1200, h: 675 });

@@ -232,7 +232,9 @@ export function App() {
         <footer className="border-t border-slate-800 bg-[#0b0f17] py-6">
           <div className="mx-auto max-w-5xl space-y-2 px-4 text-xs leading-relaxed text-slate-400 sm:px-6">
             <p className="font-mono text-slate-300">
-              {data.disclaimers.siteName} ({siteDomain})
+              {data.disclaimers.siteName.toLowerCase() === siteDomain.toLowerCase()
+                ? siteDomain
+                : `${data.disclaimers.siteName} (${siteDomain})`}
             </p>
             <p>{data.disclaimers.asIsDisclaimer}</p>
             <p>{data.disclaimers.nonAffiliationNotice}</p>

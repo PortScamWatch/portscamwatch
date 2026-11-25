@@ -177,7 +177,32 @@ function generateOgImage() {
     <text x="1116" y="554" font-family="${MONO_FAMILY}" font-size="16" font-weight="400" fill="#94a3b8" text-anchor="end">ZERO COOKIES · NO QUERY LOGGING</text>
   </svg>`;
 
-  return renderSvgToPng(svg, path.join(ROOT_DIR, 'public/og-image.png'));
+  const ogOut = renderSvgToPng(svg, path.join(ROOT_DIR, 'public/og-image.png'));
+  fs.mkdirSync(path.join(ROOT_DIR, 'launch-assets/profile'), { recursive: true });
+  fs.copyFileSync(
+    path.join(ROOT_DIR, 'public/og-image.png'),
+    path.join(ROOT_DIR, 'launch-assets/profile/og-image-1200x630.png'),
+  );
+  return ogOut;
+}
+
+function generateSiteIcons() {
+  const iconSvg = (size, rounded) => `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 64 64">
+    <rect width="64" height="64" rx="${rounded}" fill="#0b0f17"/>
+    <path d="M 32 10 L 50 18 L 50 34 C 50 45 41.5 52.5 32 56.5 C 22.5 52.5 14 45 14 34 L 14 18 Z"
+          fill="#111827" stroke="#38bdf8" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M 32 16 L 44.5 21.5 L 44.5 33.5 C 44.5 41.5 38.5 47 32 50 C 25.5 47 19.5 41.5 19.5 33.5 L 19.5 21.5 Z"
+          fill="#0b0f17" stroke="#334155" stroke-width="1.2"/>
+    <circle cx="32" cy="33" r="7.5" fill="none" stroke="#38bdf8" stroke-width="2"/>
+    <line x1="21" y1="33" x2="43" y2="33" stroke="#64748b" stroke-width="1.4"/>
+    <line x1="32" y1="22" x2="32" y2="44" stroke="#64748b" stroke-width="1.4"/>
+    <circle cx="32" cy="33" r="3" fill="#ef4444"/>
+  </svg>`;
+
+  return [
+    renderSvgToPng(iconSvg(32, 12), path.join(ROOT_DIR, 'public/favicon-32x32.png')),
+    renderSvgToPng(iconSvg(180, 0), path.join(ROOT_DIR, 'public/apple-touch-icon.png')),
+  ];
 }
 
 // ---------------------------------------------------------------------------
@@ -256,7 +281,7 @@ function generateProfileAssets() {
 }
 
 // ---------------------------------------------------------------------------
-// C. 6 X (Twitter) Reply & Thread Cards (1200x675)
+// C. 8 X (Twitter) Reply & Thread Cards (1200x675)
 // ---------------------------------------------------------------------------
 function generateXCards() {
   const cards = [
@@ -267,7 +292,7 @@ function generateXCards() {
       title: 'GTA 6 Launch-Week Threat Snapshot',
       subtitle: `${TOTAL_ADVISORIES} Vendor Advisories  |  ${TOTAL_INDICATORS} Verified Indicators  |  Live Client-Side RDAP`,
       bullets: [
-        'Official Release: PS5 & Xbox Series X|S only (rockstargames.com)',
+        `Scope: ${TOTAL_ADVISORIES} verified vendor advisories · ${TOTAL_INDICATORS} normalized IOCs (Nov 2026)`,
         'Tracked Vendors: Bitdefender, Malwarebytes, Netcraft, Darktrace, NordVPN, ESET, Cynet',
         'Top Vectors: ClickFix Win+R hijacks, Vidar/WARDEN infostealers, fake APKs & drainers',
         '3-Tier Check: Vendor IOC match + live client-side RDAP domain age',
@@ -326,7 +351,7 @@ function generateXCards() {
         'Android Package: com.gta6.apkrate (36.8 MB Unity APK under 90+ filenames)',
         'Mobile Risk: Aggressive ad SDKs, debugger checks & SIM/app enumeration',
         'OAuth Phishing: Fake "Continue with Google" pages steal Gmail & YouTube logins',
-        'Console Only: Zero official GTA 6 Android or iOS builds have been released',
+        'Removal: Uninstall via Android Settings > Apps & disable "Install unknown apps"',
       ],
       footerNote: 'Uninstall unknown APKs & revoke suspicious OAuth access',
     },
@@ -343,6 +368,34 @@ function generateXCards() {
         '4. Run a deep offline AV scan; for ClickFix persistence, perform a clean OS reset',
       ],
       footerNote: 'Interactive 60-second exposure wizard available online',
+    },
+    {
+      filename: '07-thread2-cookie-hijacking.png',
+      accent: '#ef4444',
+      badge: 'INCIDENT BRIEF · SESSION-COOKIE THEFT',
+      title: "Why Changing Your Password Isn't Enough",
+      subtitle: 'Infostealers copy live browser session tokens alongside saved credentials',
+      bullets: [
+        'Active GTA 6 stealers (GTA6Cloud.exe, gta6_installer.exe, GTA6 Keygen.exe, WARDEN) copy live browser session cookies',
+        'Stolen session tokens bypass passwords and 2FA on Gmail, Steam, Discord & Rockstar accounts',
+        'Changing passwords on the infected PC lets active stealers capture the new credentials immediately',
+        'Containment requires revoking all active sessions ("Sign out everywhere") from a separate clean device',
+      ],
+      footerNote: 'Rotate passwords & revoke active sessions from an unaffected device',
+    },
+    {
+      filename: '08-thread2-readonly-paths.png',
+      accent: '#38bdf8',
+      badge: 'READ-ONLY CHECK · WINDOWS FILE EXPLORER',
+      title: 'Inspect Known ClickFix Artifacts Without Running Code',
+      subtitle: 'Check staging paths safely in File Explorer — never execute unknown binaries',
+      bullets: [
+        'Step 1: Open Windows File Explorer -> View -> Show -> enable "Hidden items"',
+        'Step 2: Check %LOCALAPPDATA%\\Temp\\ls_trace.txt and %LOCALAPPDATA%\\GTA6Cloud\\',
+        'Step 3: Check %LOCALAPPDATA%\\Microsoft\\Windows\\Explorer\\IconCacheToDelete\\0a3f2c91',
+        'Never double-click suspicious files and never paste website commands into Win + R',
+      ],
+      footerNote: 'Run the 60-second exposure checklist if any artifact is present',
     },
   ];
 
@@ -836,14 +889,16 @@ function generatePreviewHtml({ og, profile, xCards, tiktokSlides }) {
 
 function main() {
   const og = generateOgImage();
+  const siteIcons = generateSiteIcons();
   const profile = generateProfileAssets();
   const xCards = generateXCards();
   const tiktokSlides = generateTikTokCarousels();
   const previewPath = generatePreviewHtml({ og, profile, xCards, tiktokSlides });
 
-  const totalPngs = 1 + profile.length + xCards.length + tiktokSlides.length;
+  const totalPngs = 1 + siteIcons.length + profile.length + xCards.length + tiktokSlides.length;
   console.log(`Generated ${totalPngs} PNG assets + preview gallery:`);
   console.log(`  - public/og-image.png (${og.width}x${og.height})`);
+  console.log(`  - public/favicon-32x32.png & public/apple-touch-icon.png (${siteIcons.length} files)`);
   console.log(`  - launch-assets/profile/ (${profile.length} files)`);
   console.log(`  - launch-assets/x-cards/ (${xCards.length} files)`);
   console.log(`  - launch-assets/tiktok-carousels/ (${tiktokSlides.length} slides across 5 carousels)`);
