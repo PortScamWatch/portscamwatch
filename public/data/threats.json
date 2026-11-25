@@ -1,7 +1,7 @@
 {
   "meta": {
     "siteDomain": "portscamwatch.com",
-    "lastVerifiedUtc": "2026-11-25T19:52:00Z",
+    "lastVerifiedUtc": "2026-11-25T23:26:25Z",
     "officialPcReleaseStatus": "UNRELEASED_CONSOLE_ONLY",
     "officialPlatforms": [
       "PlayStation 5",
@@ -402,6 +402,41 @@
       "vendorName": "Cynet",
       "advisoryDate": "2026-11-13",
       "advisoryUrl": "https://www.cynet.com/blog/download-gta6-for-free-inside-the-malware-trap/"
+    },
+    {
+      "id": "eset-gta-vi-malware-and-pre-order-scam-campaign-2026-11-13",
+      "title": "GTA VI Malware and Pre-order Scam Campaign",
+      "severity": "CRITICAL",
+      "malwareFamily": "Vidar, njRAT, DCRat, Mercurial Grabber, Chaos ransomware",
+      "lureType": "Fake PC Demo",
+      "displayIndicators": [
+        "gta6_installer_cyberleek.exe",
+        "cyberleek-gtavi-gta6-prebuild.torrent.exe"
+      ],
+      "indicators": [
+        "gta6_installer_cyberleek.exe",
+        "cyberleek-gtavi-gta6-prebuild.torrent.exe"
+      ],
+      "targetedData": [
+        "saved passwords",
+        "autofill information",
+        "FTP credentials",
+        "crypto wallet data",
+        "session cookies",
+        "Discord tokens",
+        "browser credentials",
+        "gaming-related session data",
+        "payment-card details",
+        "personal information"
+      ],
+      "hostArtifacts": [
+        "License not found error prompt during fake installation",
+        "malicious components running in the background"
+      ],
+      "summary": "Cybercriminals are capitalizing on the anticipation of Grand Theft Auto VI by distributing malware-laced installers, fake ISOs, and fraudulent storefronts. These campaigns utilize malicious filenames such as gta6_installer.exe and gtavi.exe to deliver infostealers, remote-access trojans like njRAT and DCRat, and Chaos ransomware.",
+      "vendorName": "ESET",
+      "advisoryDate": "2026-11-13",
+      "advisoryUrl": "https://www.welivesecurity.com/en/cybersecurity/gta-vi-isnt-out-yet-scams-full-swing/"
     }
   ]
 }
