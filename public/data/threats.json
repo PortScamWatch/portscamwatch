@@ -1,0 +1,407 @@
+{
+  "meta": {
+    "siteDomain": "portscamwatch.com",
+    "lastVerifiedUtc": "2026-11-25T19:52:00Z",
+    "officialPcReleaseStatus": "UNRELEASED_CONSOLE_ONLY",
+    "officialPlatforms": [
+      "PlayStation 5",
+      "Xbox Series X|S"
+    ]
+  },
+  "threats": [
+    {
+      "id": "bitdefender-gta6-clickfix-rust-stealer",
+      "title": "Fake GTA VI PC Cloud Client ClickFix & Rust Infostealer",
+      "severity": "CRITICAL",
+      "malwareFamily": "Rust Infostealer (ClickFix / PhotoCache)",
+      "lureType": "Fake Cloud Client",
+      "displayIndicators": [
+        "gta6cloud[.]nexus",
+        "velmontriq[.]net",
+        "nimbuskeep[.]com",
+        "192[.]30[.]240[.]26",
+        "GTA6Cloud.zip",
+        "GTA6Cloud.exe",
+        "loadperf.dll",
+        "unlodctr.exe",
+        "PhotoCache.exe",
+        "3A0C4760DEC4FED3E822DB9A630107DA266AAEFFEA8A0CCF506DFAA5847BD922",
+        "28F9725FC6A701FC5D3E06C5687C2A842E0CDF79B9B2780FB5A804FC006410E8",
+        "18DD64270E540A52DB41BF77E357DF709CBECAB88E160BD66C23B63F9240AB38",
+        "33F1649976FF7A6C1A785A1D9EB091E078A5D653BFF5F696FA48D80D5EF904F3"
+      ],
+      "indicators": [
+        "gta6cloud.nexus",
+        "velmontriq.net",
+        "nimbuskeep.com",
+        "192.30.240.26",
+        "gta6cloud.zip",
+        "gta6cloud.exe",
+        "loadperf.dll",
+        "unlodctr.exe",
+        "photocache.exe",
+        "3a0c4760dec4fed3e822db9a630107da266aaeffea8a0ccf506dfaa5847bd922",
+        "28f9725fc6a701fc5d3e06c5687c2a842e0cdf79b9b2780fb5a804fc006410e8",
+        "18dd64270e540a52db41bf77e357df709cbecab88e160bd66c23b63f9240ab38",
+        "33f1649976ff7a6c1a785a1d9eb091e078a5d653bff5f696fa48d80d5ef904f3"
+      ],
+      "targetedData": [
+        "Browser logins & cookies (Chromium & Gecko)",
+        "Steam/Discord accounts",
+        "Crypto wallets",
+        "AI/developer API keys",
+        "Clipboard contents & screenshots"
+      ],
+      "hostArtifacts": [
+        "%LOCALAPPDATA%\\Temp\\ls_trace.txt",
+        "%LOCALAPPDATA%\\Microsoft\\Windows\\Explorer\\IconCacheToDelete\\0a3f2c91",
+        "%LOCALAPPDATA%\\GTA6Cloud\\GTA6Cloud.exe",
+        "ls_work",
+        "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run"
+      ],
+      "summary": "A fake GTA VI cloud-streaming site lures Windows users into running a ClickFix Win+R PowerShell command or downloading GTA6Cloud.zip, which plays a trailer decoy while side-loading loadperf.dll via unlodctr.exe from velmontriq[.]net. An embedded Rust-based infostealer (PhotoCache.exe) injects into legitimate Windows processes to steal browser credentials, session tokens, Discord/Steam accounts, crypto wallets, and AI/developer API keys before exfiltrating to nimbuskeep[.]com.",
+      "vendorName": "Bitdefender Labs",
+      "advisoryDate": "2026-11-20",
+      "advisoryUrl": "https://www.bitdefender.com/en-us/blog/labs/fake-gta-vi-pc-client-malware-clickfix"
+    },
+    {
+      "id": "malwarebytes-gta6-vidar-infostealer",
+      "title": "Fake GTA 6 Extended Look & Demo Sites Delivering Vidar Infostealer",
+      "severity": "CRITICAL",
+      "malwareFamily": "Vidar Infostealer",
+      "lureType": "Fake PC Demo",
+      "displayIndicators": [
+        "gta6demo[.]asia",
+        "gta6demo[.]eu",
+        "gta6demo[.]us",
+        "rockstar-gta-6[.]com",
+        "gta6_installer.exe",
+        "a8f19d598e6a49d8510d73d41fc445246755ed321c2f76985a463a9fef537eb0",
+        "ses.1001gacor[.]org",
+        "ket.sm188daftar[.]mom",
+        "ket.1001gacor[.]org",
+        "ljr.1001gacor[.]org",
+        "nhg.1001gacor[.]org",
+        "bob.1001gacor[.]org",
+        "kra.1001gacor[.]org",
+        "brr.1001gacor[.]org",
+        "sto.1001gacor[.]org",
+        "rex.1001gacor[.]org",
+        "bib.1001gacor[.]org",
+        "ges.1001gacor[.]org",
+        "tax.11gokil[.]org",
+        "sii.11gokil[.]org",
+        "zaf.11gokil[.]org",
+        "dez.11gokil[.]org",
+        "tax.sm188dnsx[.]top",
+        "sii.sm188dnsx[.]top",
+        "zaf.sm188dnsx[.]top"
+      ],
+      "indicators": [
+        "gta6demo.asia",
+        "gta6demo.eu",
+        "gta6demo.us",
+        "rockstar-gta-6.com",
+        "gta6_installer.exe",
+        "a8f19d598e6a49d8510d73d41fc445246755ed321c2f76985a463a9fef537eb0",
+        "ses.1001gacor.org",
+        "ket.sm188daftar.mom",
+        "ket.1001gacor.org",
+        "ljr.1001gacor.org",
+        "nhg.1001gacor.org",
+        "bob.1001gacor.org",
+        "kra.1001gacor.org",
+        "brr.1001gacor.org",
+        "sto.1001gacor.org",
+        "rex.1001gacor.org",
+        "bib.1001gacor.org",
+        "ges.1001gacor.org",
+        "tax.11gokil.org",
+        "sii.11gokil.org",
+        "zaf.11gokil.org",
+        "dez.11gokil.org",
+        "tax.sm188dnsx.top",
+        "sii.sm188dnsx.top",
+        "zaf.sm188dnsx.top"
+      ],
+      "targetedData": [
+        "Browser logins, cookies & autofill (19 browsers)",
+        "Roblox Studio WebView2 session data",
+        "Thunderbird email profiles",
+        "FTP client credentials"
+      ],
+      "hostArtifacts": [
+        "Headless Chrome/Edge/Firefox spawned with temporary user-data directories",
+        "No persistent startup entry or scheduled task observed"
+      ],
+      "summary": "Cloned Rockstar demo websites distribute a 1.1 MB Windows executable (gta6_installer.exe) containing the Vidar infostealer. It launches local Chrome, Edge, and Firefox binaries in headless mode to bypass browser encryption and steals saved passwords, session cookies, and FTP/email credentials before resolving C2 servers via dead-drop profiles and exfiltrating to ses.1001gacor[.]org.",
+      "vendorName": "Malwarebytes",
+      "advisoryDate": "2026-08-24",
+      "advisoryUrl": "https://www.malwarebytes.com/blog/threat-intel/2026/08/fake-gta-6-extended-look-and-demo-sites-deliver-an-infostealer"
+    },
+    {
+      "id": "darktrace-gta6-installrex-vidar-telemetry",
+      "title": "Fake GTA VI Download Sites (InstallRex PUP & Vidar Enterprise Telemetry)",
+      "severity": "HIGH",
+      "malwareFamily": "InstallRex PUP / Vidar Infostealer Telemetry",
+      "lureType": "Fake PC Demo",
+      "displayIndicators": [
+        "gta6-play[.]ru",
+        "gta6demo[.]asia"
+      ],
+      "indicators": [
+        "gta6-play.ru"
+      ],
+      "targetedData": [
+        "Host/sandbox environment telemetry",
+        "Browser & system credentials (via linked gta6demo[.]asia Vidar campaign)"
+      ],
+      "hostArtifacts": [
+        "InstallMate executable with embedded .tsuarch section and tiz3 archive",
+        "Registry, MAC address, and VM/debugger process enumeration"
+      ],
+      "summary": "Darktrace detected enterprise devices connecting to gta6demo[.]asia (linked to the Vidar infostealer campaign) across 12 customer environments and observed DNS requests to gta6-play[.]ru leading to an unofficial 'Download Studio' installer. The gta6-play[.]ru InstallMate executable resembles InstallRex PUP and conducts extensive anti-analysis, registry, and virtualization checks without confirming a follow-on C2 payload.",
+      "vendorName": "Darktrace",
+      "advisoryDate": "2026-11-17",
+      "advisoryUrl": "https://www.darktrace.com/blog/gta-vi-cyber-threats-fake-downloads-ransomware-and-account-hijacking"
+    },
+    {
+      "id": "nordvpn-gta6-darkweb-scam-kit",
+      "title": "Dark-Web $200 GTA 6 Scam Bundle (Keygen Stealer, Wallet Drainer & XMRig)",
+      "severity": "CRITICAL",
+      "malwareFamily": "Cookie Stealer / Multi-Chain Wallet Drainer / XMRig Miner",
+      "lureType": "Keygen",
+      "displayIndicators": [
+        "GTA6 Keygen.exe",
+        "XMRig"
+      ],
+      "indicators": [
+        "gta6 keygen.exe",
+        "xmrig"
+      ],
+      "targetedData": [
+        "Browser session cookies & tokens",
+        "Crypto wallets (Ethereum, BSC, Solana, Polygon)",
+        "Victim CPU/GPU compute resources"
+      ],
+      "hostArtifacts": [
+        "GTA6 Keygen.exe",
+        "Background XMRig cryptocurrency miner process"
+      ],
+      "summary": "NordVPN Threat Intelligence uncovered a $200 dark-web scam kit (sold for Bitcoin or Tether and promoted via an automated YouTube Shorts bot) targeting players searching for a nonexistent GTA 6 PC port. The bundle pairs a session-cookie stealer disguised as GTA6 Keygen.exe with an XMRig hidden miner and a multi-chain wallet drainer targeting Ethereum, BSC, Solana, and Polygon wallets.",
+      "vendorName": "NordVPN Threat Intelligence (via TechRadar)",
+      "advisoryDate": "2026-11-18",
+      "advisoryUrl": "https://www.techradar.com/vpn/vpn-privacy-security/fake-gta-6-pc-downloads-are-spreading-malware-through-dark-web-scam-bundle-nordvpn-warns"
+    },
+    {
+      "id": "malwarebytes-gta6-fake-apk-adware",
+      "title": "Fake GTA 6 Android APK Adware & Mobile Lure Campaign",
+      "severity": "HIGH",
+      "malwareFamily": "Android Ad-SDK Adware (com.gta6.apkrate)",
+      "lureType": "Fake APK",
+      "displayIndicators": [
+        "com.gta6.apkrate",
+        "GTA 6 Mod APK Beta V8.0.9 Unlimited Money"
+      ],
+      "indicators": [
+        "com.gta6.apkrate",
+        "gta 6 mod apk beta v8.0.9 unlimited money"
+      ],
+      "targetedData": [
+        "Installed Android app list & running processes",
+        "SIM operator, mobile network & country code"
+      ],
+      "hostArtifacts": [
+        "Android package com.gta6.apkrate (36.8 MB Unity APK)",
+        "Obfuscated methods with debugger/ADB detection"
+      ],
+      "summary": "Scam websites displaying fake 'Download APK' and 'Download iOS' buttons distribute a 36.8 MB Unity-based Android adware package (com.gta6.apkrate) uploaded over 1,700 times under more than 90 lure filenames. Once sideloaded, the app serves aggressive ad SDKs, checks for debuggers or ADB, enumerates installed apps and SIM/network data, and can terminate processes or delete files.",
+      "vendorName": "Malwarebytes",
+      "advisoryDate": "2026-11-18",
+      "advisoryUrl": "https://www.malwarebytes.com/blog/scams/2026/11/gta-6-scams-could-cost-you-your-account-money-or-crypto"
+    },
+    {
+      "id": "malwarebytes-gta6-oauth-phishing-wallet-drainer",
+      "title": "Fake GTA 6 Google OAuth Phishing, Crypto Tokens & Wallet Drainers",
+      "severity": "CRITICAL",
+      "malwareFamily": "Google OAuth Phishing / Web3 Wallet Drainer",
+      "lureType": "Crypto Drainer",
+      "displayIndicators": [
+        "GTA6 Coin (BSC)",
+        "Sign in - Google Accounts (cloned OAuth prompt)"
+      ],
+      "indicators": [
+        "gta6 coin"
+      ],
+      "targetedData": [
+        "Google account credentials (Gmail, Drive, YouTube, saved passwords)",
+        "Web3 wallet token approvals (WalletConnect, MetaMask, Trust Wallet, OKX, Ledger, Safe)",
+        "Payment card & cryptocurrency funds"
+      ],
+      "hostArtifacts": [
+        "Cloned Google OAuth login hosted on non-Google domain with random URL ID",
+        "Malicious Web3 token-approval signatures in connected wallet"
+      ],
+      "summary": "Fraudulent 'Get GTA VI for free' pages present a fake 'Continue with Google' verification flow that reloads the scam domain with a cloned Google login form to harvest Google credentials. Parallel countdown sites promote fake BSC ('GTA6 Coin') and Solana tokens or $50/1 SOL sales that open a WalletConnect modal to solicit malicious token-approval signatures and drain connected crypto wallets.",
+      "vendorName": "Malwarebytes",
+      "advisoryDate": "2026-11-18",
+      "advisoryUrl": "https://www.malwarebytes.com/blog/scams/2026/11/gta-6-scams-could-cost-you-your-account-money-or-crypto"
+    },
+    {
+      "id": "netcraft-gta6-cyberleek-crack-and-apk-domains",
+      "title": "Netcraft GTA 6 Fake PC Crack, CyberLeek Trojan, Mobile APK & Support Domains",
+      "severity": "HIGH",
+      "malwareFamily": "Trojan Installers (GTAVI.exe / Cyberleek Launcher) & Phishing",
+      "lureType": "Fake PC Demo",
+      "displayIndicators": [
+        "gta6download[.]club",
+        "gta6downloadforpc[.]com",
+        "gta6free[.]net",
+        "rockstargames[.]support",
+        "gta6generator[.]site",
+        "gta6cyberleek[.]com",
+        "cyberleek[.]click",
+        "cyberleek[.]world",
+        "cyberleek[.]cfd",
+        "cyberleek[.]my",
+        "gta6[.]exposed",
+        "gta6underground[.]com",
+        "gta6thapk[.]com",
+        "gta6world[.]live",
+        "gta6[.]io[.]in",
+        "gta6apks[.]in",
+        "gta6mobile[.]com[.]in",
+        "gta6mobile[.]app",
+        "rockstargamesprevenda[.]store",
+        "rockstargamesoficialbr[.]shop",
+        "gtavi[.]my",
+        "mygta6[.]icu",
+        "gta6keycodes[.]com",
+        "gta6bonuses[.]com",
+        "gta6sharkcard[.]com",
+        "gta6bestmoneyglitch[.]com",
+        "contact-rockstargames[.]com",
+        "rockstargamessupport[.]com",
+        "gta6jasonlucia[.]com",
+        "cyberleeks[.]com[.]br",
+        "GTAVI.exe",
+        "Cyberleek Launcher",
+        "pre-release-access.exe",
+        "GTA.VI.8.0.9.Beta"
+      ],
+      "indicators": [
+        "gta6download.club",
+        "gta6downloadforpc.com",
+        "gta6free.net",
+        "rockstargames.support",
+        "gta6generator.site",
+        "gta6cyberleek.com",
+        "cyberleek.click",
+        "cyberleek.world",
+        "cyberleek.cfd",
+        "cyberleek.my",
+        "gta6.exposed",
+        "gta6underground.com",
+        "gta6thapk.com",
+        "gta6world.live",
+        "gta6.io.in",
+        "gta6apks.in",
+        "gta6mobile.com.in",
+        "gta6mobile.app",
+        "rockstargamesprevenda.store",
+        "rockstargamesoficialbr.shop",
+        "gtavi.my",
+        "mygta6.icu",
+        "gta6keycodes.com",
+        "gta6bonuses.com",
+        "gta6sharkcard.com",
+        "gta6bestmoneyglitch.com",
+        "contact-rockstargames.com",
+        "rockstargamessupport.com",
+        "gta6jasonlucia.com",
+        "cyberleeks.com.br",
+        "gtavi.exe",
+        "cyberleek launcher",
+        "pre-release-access.exe",
+        "gta.vi.8.0.9.beta"
+      ],
+      "targetedData": [
+        "Cryptocurrency payments (BTC, XMR, LTC, SOL, USDT)",
+        "Brazilian PIX payments",
+        "Rockstar/Microsoft/Sony account credentials",
+        "Personal details via content lockers"
+      ],
+      "hostArtifacts": [
+        "GTAVI.exe (flagged as Trojan by 34/68 VirusTotal engines)",
+        "Cyberleek Launcher (flagged by 18/62 VirusTotal engines)",
+        "Sideloaded Android APK GTA.VI.8.0.9.Beta"
+      ],
+      "summary": "Netcraft tracked a surge exceeding 800 new GTA VI scam domains per week ahead of launch, including CyberLeek sites distributing trojanized installers (GTAVI.exe, Cyberleek Launcher) and fake mobile APK portals. Its November 18 update flagged newly registered cracked PC download domains (gta6download[.]club, gta6downloadforpc[.]com), a cloned Rockstar support site (rockstargames[.]support), and GTA$ generators.",
+      "vendorName": "Netcraft",
+      "advisoryDate": "2026-11-18",
+      "advisoryUrl": "https://www.netcraft.com/blog/how-attackers-are-capitalizing-on-the-hype-around-the-grand-theft-auto-vi-release"
+    },
+    {
+      "id": "eset-gta6-early-access-leaks",
+      "title": "ESET GTA VI Early Access, Leak Decoys & Fake APK Malware",
+      "severity": "HIGH",
+      "malwareFamily": "Vidar Infostealer / RATs / Destructive Wiper Malware",
+      "lureType": "Fake PC Demo",
+      "displayIndicators": [
+        "gta6 beta early access.exe",
+        "GTA6 Leaks.exe",
+        "GTA6.apk"
+      ],
+      "indicators": [
+        "gta6 beta early access.exe",
+        "gta6 leaks.exe",
+        "gta6.apk"
+      ],
+      "targetedData": [
+        "Keystrokes & browser credentials/cookies (19 browsers)",
+        "FTP credentials & crypto wallets",
+        "Victim local files (wiper/encryptor)"
+      ],
+      "hostArtifacts": [
+        "1.1 MB Vidar infostealer installer",
+        "100+ GB decoy archives containing RATs or destructive wipers",
+        "Unauthorized Android package GTA6.apk"
+      ],
+      "summary": "ESET warned that threat actors use cloned Rockstar 'Play Now' pages and massive 100+ GB decoy builds to distribute Vidar infostealers, remote access trojans, and destructive wiper/encryptor malware. Confirmed lure filenames circulating ahead of launch include gta6 beta early access.exe, GTA6 Leaks.exe, and GTA6.apk.",
+      "vendorName": "ESET",
+      "advisoryDate": "2026-11-18",
+      "advisoryUrl": "https://www.eset.com/hu/hirek/hogyan-vedekezzunk-a-gta-vi-hoz-kapcsolodo-csalasok-ellen-2026/"
+    },
+    {
+      "id": "cynet-gta6-warden-stealer",
+      "title": "Google Colab Fake GTA 6 Download Delivering WARDEN Stealer",
+      "severity": "CRITICAL",
+      "malwareFamily": "WARDEN Stealer",
+      "lureType": "Fake PC Demo",
+      "displayIndicators": [
+        "Gta_6_Exe_File_Download.zip",
+        "gta_6_exe_file_download.exe",
+        "uroker[.]casa"
+      ],
+      "indicators": [
+        "gta_6_exe_file_download.zip",
+        "gta_6_exe_file_download.exe",
+        "uroker.casa"
+      ],
+      "targetedData": [
+        "Browser passwords & session cookies",
+        "Steam & Roblox credentials",
+        "Crypto wallets"
+      ],
+      "hostArtifacts": [
+        "Gta_6_Exe_File_Download.zip",
+        "gta_6_exe_file_download.exe",
+        "Outbound C2 traffic to uroker[.]casa"
+      ],
+      "summary": "Cynet (also referenced in McAfee's November 19 launch advisory) documented attackers abusing Google Colab notebooks to lure gamers into downloading Gta_6_Exe_File_Download.zip. Executing gta_6_exe_file_download.exe deploys WARDEN Stealer to exfiltrate browser logins, cookies, Steam/Roblox credentials, and crypto wallet data to uroker[.]casa.",
+      "vendorName": "Cynet",
+      "advisoryDate": "2026-11-13",
+      "advisoryUrl": "https://www.cynet.com/blog/download-gta6-for-free-inside-the-malware-trap/"
+    }
+  ]
+}

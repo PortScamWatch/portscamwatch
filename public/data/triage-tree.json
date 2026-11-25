@@ -1,0 +1,147 @@
+{
+  "questions": [
+    {
+      "id": "q1",
+      "prompt": "Did you paste a command into the Windows Run box (Win + R) or PowerShell, or run any GTA 6 PC installer, cloud player, crack, or keygen executable?",
+      "helperText": "Visually check your Downloads folder (%USERPROFILE%\\Downloads) or browser download history (Ctrl + J) for files like GTA6Cloud.exe, gta6_installer.exe, GTAVI.exe, or GTA6 Keygen.exe without opening them.",
+      "riskWeight": 3,
+      "yesTriggersSeverity": "CRITICAL_INFECTED"
+    },
+    {
+      "id": "q2",
+      "prompt": "Do you see suspicious GTA 6 staging files or hidden folders in Windows File Explorer such as ls_trace.txt, GTA6Cloud, or IconCacheToDelete\\0a3f2c91?",
+      "helperText": "Open File Explorer, turn on View > Show > Hidden items, and visually inspect %LOCALAPPDATA%\\Temp\\ls_trace.txt, %LOCALAPPDATA%\\GTA6Cloud, and %LOCALAPPDATA%\\Microsoft\\Windows\\Explorer\\IconCacheToDelete.",
+      "riskWeight": 3,
+      "yesTriggersSeverity": "CRITICAL_INFECTED"
+    },
+    {
+      "id": "q3",
+      "prompt": "Did you connect a cryptocurrency wallet or sign a transaction or token-approval prompt on a GTA 6 countdown, presale, or token website?",
+      "helperText": "Check your wallet extension's Connected Sites list or recent approval history (for MetaMask, Trust Wallet, Phantom, or WalletConnect) from a separate unaffected device.",
+      "riskWeight": 3,
+      "yesTriggersSeverity": "CRITICAL_INFECTED"
+    },
+    {
+      "id": "q4",
+      "prompt": "Did you enter Google, Steam, Discord, Rockstar, PlayStation, or Xbox credentials on an unofficial GTA 6 site, or sideload a GTA 6 Android APK?",
+      "helperText": "Check your browser history (Ctrl + H) for lookalike verification pages or inspect Android Settings > Apps for unofficial packages such as com.gta6.apkrate.",
+      "riskWeight": 2,
+      "yesTriggersSeverity": "HIGH_EXPOSURE"
+    },
+    {
+      "id": "q5",
+      "prompt": "Did you download a GTA 6 PC or mobile file without running it, or interact with an unlisted GTA 6 download site not yet in our database?",
+      "helperText": "Because Rockstar Games has not released an official PC or mobile version of GTA 6, any unknown or unlisted file is treated as Unverified / High Risk and must not be executed.",
+      "riskWeight": 1,
+      "yesTriggersSeverity": "UNVERIFIED_CAUTION"
+    }
+  ],
+  "outcomes": {
+    "CRITICAL_INFECTED": {
+      "badge": "HIGH LIKELIHOOD OF COMPROMISE",
+      "headline": "Treat this device as compromised immediately.",
+      "summary": "Your answers match active GTA 6 infostealer, ClickFix, or wallet-drainer campaigns documented by security vendors. Stolen session cookies and Web3 token approvals can bypass passwords and 2FA, so rapid containment from a separate unaffected device is essential.",
+      "steps": [
+        {
+          "order": 1,
+          "title": "Disconnect from the internet immediately",
+          "detail": "Turn off Wi-Fi and unplug Ethernet on the affected device to halt ongoing credential exfiltration, C2 beacons, or hidden cryptocurrency mining.",
+          "recommendedToolKey": "none"
+        },
+        {
+          "order": 2,
+          "title": "Rotate passwords and revoke all active sessions from a separate unaffected device",
+          "detail": "Using a different, uncompromised phone or computer, change passwords for Google, Steam, Discord, Rockstar, email, and banking accounts, enable app-based 2FA, and click 'Sign out of all sessions' to invalidate stolen cookies.",
+          "recommendedToolKey": "nordpass"
+        },
+        {
+          "order": 3,
+          "title": "Revoke crypto wallet approvals and move remaining funds",
+          "detail": "From an uncompromised device, revoke suspicious smart-contract spending approvals and transfer remaining assets to a newly generated wallet whose seed phrase was never exposed to the affected machine.",
+          "recommendedToolKey": "none"
+        },
+        {
+          "order": 4,
+          "title": "Run a full system malware scan and consider an OS reinstall",
+          "detail": "Run a deep offline/full scan with an established antivirus engine; for confirmed ClickFix or Rust infostealer persistence (such as HKCU Run keys or injected processes), back up personal documents only and perform a full operating system reset.",
+          "recommendedToolKey": "bitdefender"
+        }
+      ]
+    },
+    "HIGH_EXPOSURE": {
+      "badge": "HIGH ACCOUNT OR DEVICE EXPOSURE",
+      "headline": "Secure your accounts and remove unofficial mobile apps right away.",
+      "summary": "Entering credentials on lookalike OAuth or support pages or sideloading unofficial GTA 6 APKs exposes your accounts and device metadata to takeover or adware abuse. Act quickly to cut off unauthorized access before attackers pivot to linked services.",
+      "steps": [
+        {
+          "order": 1,
+          "title": "Change exposed passwords and revoke active sessions",
+          "detail": "From an uncompromised device, reset your Google, Steam, Discord, Rockstar, PlayStation, or Xbox passwords, review authorized third-party OAuth apps, and sign out all active sessions.",
+          "recommendedToolKey": "nordpass"
+        },
+        {
+          "order": 2,
+          "title": "Uninstall any unofficial GTA 6 Android APK",
+          "detail": "Open Android Settings > Apps, remove any unofficial GTA 6 app (including com.gta6.apkrate), and disable 'Install unknown apps' permissions for your browser and file manager.",
+          "recommendedToolKey": "malwarebytes"
+        },
+        {
+          "order": 3,
+          "title": "Scan your device and monitor for phishing or unauthorized charges",
+          "detail": "Run a full security scan on the device and check email forwarding rules, payment statements, and gaming inventory history for unauthorized changes.",
+          "recommendedToolKey": "malwarebytes"
+        }
+      ]
+    },
+    "UNVERIFIED_CAUTION": {
+      "badge": "UNVERIFIED · HIGH RISK",
+      "headline": "Do not open the file—no official GTA 6 PC or mobile version exists.",
+      "summary": "Even if you did not execute the download or the domain is not yet listed in published vendor advisories, every unofficial GTA 6 PC installer, crack, keygen, or mobile APK carries severe malware risk. Delete the file immediately and verify your system.",
+      "steps": [
+        {
+          "order": 1,
+          "title": "Delete the downloaded archive or file without opening it",
+          "detail": "Permanently delete any downloaded GTA 6 ZIP, EXE, MSI, or APK file from your Downloads folder and empty the Recycle Bin or Trash.",
+          "recommendedToolKey": "none"
+        },
+        {
+          "order": 2,
+          "title": "Run a precautionary security scan",
+          "detail": "Run a full scan with a reputable security tool to confirm no drive-by payload or browser extension was installed while visiting the site.",
+          "recommendedToolKey": "malwarebytes"
+        },
+        {
+          "order": 3,
+          "title": "Enable web protection against newly registered scam domains",
+          "detail": "Hundreds of new GTA 6 scam domains appear weekly; use real-time web threat protection and only verify GTA 6 platform releases directly on rockstargames.com.",
+          "recommendedToolKey": "nordvpn"
+        }
+      ]
+    },
+    "UNVERIFIED_HIGH_RISK": {
+      "badge": "UNVERIFIED · HIGH RISK",
+      "headline": "Unknown or unlisted GTA 6 PC/mobile files must be treated as high risk.",
+      "summary": "Rockstar Games has released GTA 6 exclusively on PlayStation 5 and Xbox Series X|S, with no official PC or mobile version available. An indicator absent from this database is never verified as benign and should be treated as potentially malicious.",
+      "steps": [
+        {
+          "order": 1,
+          "title": "Do not download, extract, or run the file",
+          "detail": "Avoid running any unverified GTA 6 executable, script, or APK, and never paste website commands into Windows Run or PowerShell.",
+          "recommendedToolKey": "none"
+        },
+        {
+          "order": 2,
+          "title": "Scan your device if you interacted with the site",
+          "detail": "Run a full system scan with an established antivirus tool and inspect your browser extensions for unexpected additions.",
+          "recommendedToolKey": "bitdefender"
+        },
+        {
+          "order": 3,
+          "title": "Use real-time phishing and malicious-domain blocking",
+          "detail": "Enable web threat protection to block newly registered lookalike domains and wallet drainers before they load.",
+          "recommendedToolKey": "nordvpn"
+        }
+      ]
+    }
+  }
+}
