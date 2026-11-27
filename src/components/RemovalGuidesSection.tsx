@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { ArrowRight, BookOpen, ChevronDown, ExternalLink, Search } from 'lucide-react';
+import { DefenseToolsPanel } from './DefenseToolsPanel';
 
 interface RemovalGuideItem {
   anchorId: string;
@@ -161,6 +162,12 @@ export function RemovalGuidesSection({
                 <p className="mt-2 text-xs leading-relaxed text-slate-400">
                   <strong className="text-slate-300">Containment:</strong> {guide.removalNotes}
                 </p>
+
+                <DefenseToolsPanel
+                  variant="compact"
+                  heading="Recovery & Prevention Tools"
+                  className="mt-3"
+                />
               </div>
 
               <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-slate-800/80 pt-3">

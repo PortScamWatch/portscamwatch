@@ -1,51 +1,101 @@
 import type { RecommendedToolKey } from '../types/data';
 
-export interface ToolInfo {
-  key: Exclude<RecommendedToolKey, 'none'>;
-  name: string;
-  actionLabel: string;
-  url: string;
-  category: string;
-}
+export type ActiveToolKey = Exclude<RecommendedToolKey, 'none'>;
 
-type ActiveToolKey = Exclude<RecommendedToolKey, 'none'>;
+export interface ToolInfo {
+  key: ActiveToolKey;
+  name: string;
+  shortLabel: string;
+  actionLabel: string;
+  category: string;
+  description: string;
+  url: string;
+}
 
 const DEFAULT_SITE_DOMAIN = 'portscamwatch.com';
 
-const TOOL_FALLBACKS: Record<
-  ActiveToolKey,
-  Omit<ToolInfo, 'key' | 'url'> & { fallbackUrl: string }
-> = {
-  malwarebytes: {
-    name: 'Malwarebytes',
-    actionLabel: 'Scan with Malwarebytes',
-    category: 'On-Demand Infostealer Removal',
-    fallbackUrl: 'https://www.malwarebytes.com/',
-  },
-  bitdefender: {
-    name: 'Bitdefender',
-    actionLabel: 'Protect with Bitdefender',
-    category: 'Real-Time Endpoint Protection',
-    fallbackUrl: 'https://www.bitdefender.com/',
+const TOOL_CATALOG: Record<ActiveToolKey, Omit<ToolInfo, 'key' | 'url'>> = {
+  nordpass: {
+    name: 'NordPass',
+    shortLabel: 'Rotate Logins in NordPass',
+    actionLabel: 'Open NordPass',
+    category: 'Credential & Breach Scanner',
+    description:
+      'Zero-knowledge password manager & Data Breach Scanner for rotating stolen logins/sessions after infostealer exposure.',
   },
   nordvpn: {
     name: 'NordVPN',
-    actionLabel: 'Secure Traffic with NordVPN',
-    category: 'Threat & Malicious Domain Blocking',
-    fallbackUrl: 'https://nordvpn.com/',
+    shortLabel: 'Block Scam Domains (NordVPN)',
+    actionLabel: 'Open NordVPN',
+    category: 'Phishing & Download Shield',
+    description:
+      'Real-time phishing/scam domain blocker & automatic malicious download scanning via Next-gen antivirus / Threat Protection.',
   },
-  nordpass: {
-    name: 'NordPass',
-    actionLabel: 'Rotate Passwords in NordPass',
-    category: 'Credential & Password Rotation',
-    fallbackUrl: 'https://nordpass.com/',
+  malwarebytes: {
+    name: 'Malwarebytes',
+    shortLabel: 'Run Malwarebytes Scan',
+    actionLabel: 'Open Malwarebytes',
+    category: 'Infostealer & Adware Removal',
+    description: 'Deep Windows & Android infostealer/adware remediation scan.',
+  },
+  bitdefender: {
+    name: 'Bitdefender',
+    shortLabel: 'Enable Bitdefender Shield',
+    actionLabel: 'Open Bitdefender',
+    category: 'ClickFix & Script Protection',
+    description:
+      'Real-time ClickFix, script-shield & behavioral infostealer protection.',
   },
 };
+
+const TOOL_ENV_KEY: Record<ActiveToolKey, string> = {
+  nordpass: 'VITE_NORDPASS_URL',
+  nordvpn: 'VITE_NORDVPN_URL',
+  malwarebytes: 'VITE_MALWAREBYTES_URL',
+  bitdefender: 'VITE_BITDEFENDER_URL',
+};
+
+const TOOL_ORDER: ActiveToolKey[] = ['nordpass', 'nordvpn', 'malwarebytes', 'bitdefender'];
 
 function readEnvString(value: unknown): string | undefined {
   if (typeof value !== 'string') return undefined;
   const trimmed = value.trim();
   return trimmed.length > 0 ? trimmed : undefined;
+}
+
+export function isValidHttpsUrl(value: unknown): string | undefined {
+  const trimmed = readEnvString(value);
+  if (!trimmed) return undefined;
+  try {
+    const parsed = new URL(trimmed);
+    if (parsed.protocol === 'https:') {
+      return trimmed;
+    }
+    return undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function readRawEnvValue(
+  envKey: string,
+  envOverride?: Record<string, string | undefined>,
+): unknown {
+  if (envOverride) {
+    return envOverride[envKey];
+  }
+  switch (envKey) {
+    case 'VITE_NORDPASS_URL':
+      return import.meta.env.VITE_NORDPASS_URL;
+    case 'VITE_NORDVPN_URL':
+      return import.meta.env.VITE_NORDVPN_URL;
+    case 'VITE_MALWAREBYTES_URL':
+      return import.meta.env.VITE_MALWAREBYTES_URL;
+    case 'VITE_BITDEFENDER_URL':
+      return import.meta.env.VITE_BITDEFENDER_URL;
+    default:
+      return undefined;
+  }
 }
 
 export function getSiteDomain(metaFallback?: string): string {
@@ -55,40 +105,29 @@ export function getSiteDomain(metaFallback?: string): string {
   return fromMeta ?? DEFAULT_SITE_DOMAIN;
 }
 
-export function getToolInfo(key: RecommendedToolKey | string | null | undefined): ToolInfo | null {
+export function getToolInfo(
+  key: RecommendedToolKey | string | null | undefined,
+  envOverride?: Record<string, string | undefined>,
+): ToolInfo | null {
   if (!key || key === 'none') return null;
-  if (!(key in TOOL_FALLBACKS)) return null;
+  if (!(key in TOOL_CATALOG)) return null;
 
   const activeKey = key as ActiveToolKey;
-  const meta = TOOL_FALLBACKS[activeKey];
-  let envUrl: string | undefined;
+  const url = isValidHttpsUrl(readRawEnvValue(TOOL_ENV_KEY[activeKey], envOverride));
+  if (!url) return null;
 
-  switch (activeKey) {
-    case 'malwarebytes':
-      envUrl = readEnvString(import.meta.env.VITE_MALWAREBYTES_URL);
-      break;
-    case 'bitdefender':
-      envUrl = readEnvString(import.meta.env.VITE_BITDEFENDER_URL);
-      break;
-    case 'nordvpn':
-      envUrl = readEnvString(import.meta.env.VITE_NORDVPN_URL);
-      break;
-    case 'nordpass':
-      envUrl = readEnvString(import.meta.env.VITE_NORDPASS_URL);
-      break;
-  }
-
+  const meta = TOOL_CATALOG[activeKey];
   return {
     key: activeKey,
-    name: meta.name,
-    actionLabel: meta.actionLabel,
-    category: meta.category,
-    url: envUrl ?? meta.fallbackUrl,
+    ...meta,
+    url,
   };
 }
 
-export function getAllTools(): ToolInfo[] {
-  return (['malwarebytes', 'bitdefender', 'nordpass', 'nordvpn'] as ActiveToolKey[])
-    .map((key) => getToolInfo(key))
-    .filter((tool): tool is ToolInfo => tool !== null);
+export function getConfiguredTools(
+  envOverride?: Record<string, string | undefined>,
+): ToolInfo[] {
+  return TOOL_ORDER.map((key) => getToolInfo(key, envOverride)).filter(
+    (tool): tool is ToolInfo => tool !== null,
+  );
 }

@@ -7,12 +7,12 @@ import {
   ExternalLink,
   FolderSearch,
   RotateCcw,
-  ShieldCheck,
 } from 'lucide-react';
-import { getAllTools, getToolInfo } from '../lib/env';
+import { getToolInfo } from '../lib/env';
 import { formatOutcomeBadge } from '../lib/formatters';
 import { computeTriageOutcomeKey } from '../lib/threatLookup';
 import type { DisclaimersData, TriageTreeData } from '../types/data';
+import { DefenseToolsPanel } from './DefenseToolsPanel';
 
 interface TriageWizardProps {
   triageTree: TriageTreeData;
@@ -30,14 +30,13 @@ const SAFE_INSPECT_PATHS = [
   },
 ];
 
-export function TriageWizard({ triageTree, disclaimers }: TriageWizardProps) {
+export function TriageWizard({ triageTree, disclaimers: _disclaimers }: TriageWizardProps) {
   const [answers, setAnswers] = useState<Record<string, boolean | null>>({});
   const [copiedPath, setCopiedPath] = useState<string | null>(null);
 
   const outcomeKey = computeTriageOutcomeKey(triageTree.questions, answers);
   const outcome = triageTree.outcomes[outcomeKey];
   const answeredCount = Object.values(answers).filter((v) => v !== null && v !== undefined).length;
-  const allTools = getAllTools();
 
   const handleCopyPath = async (path: string) => {
     try {
@@ -185,7 +184,7 @@ export function TriageWizard({ triageTree, disclaimers }: TriageWizardProps) {
         })}
       </div>
 
-      {/* Containment Checklist Outcome */}
+      {/* Containment Checklist Outcome + Prominent Protection Panel */}
       <div className={`mt-6 rounded-xl border p-5 ${outcomeBorder}`}>
         <div className="flex flex-wrap items-center gap-2">
           <span
@@ -236,35 +235,12 @@ export function TriageWizard({ triageTree, disclaimers }: TriageWizardProps) {
           })}
         </ol>
 
-        {/* Affiliate Disclosure + Recommended Security Tool Buttons */}
-        <div className="mt-5 border-t border-slate-800 pt-4">
-          <div className="flex items-start gap-2 rounded-lg border border-slate-800 bg-[#0b0f17] p-3 text-xs text-slate-400">
-            <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" />
-            <p>{disclaimers.affiliateDisclosure}</p>
-          </div>
-
-          <div className="mt-3 grid gap-2.5 sm:grid-cols-2 lg:grid-cols-4">
-            {allTools.map((tool) => (
-              <a
-                key={tool.key}
-                href={tool.url}
-                target="_blank"
-                rel="noopener noreferrer sponsored"
-                className="flex flex-col justify-between rounded-lg border border-slate-800 bg-[#0b0f17] p-3 transition hover:border-slate-600"
-              >
-                <div>
-                  <span className="font-mono text-[11px] uppercase tracking-wider text-slate-400">
-                    {tool.category}
-                  </span>
-                  <p className="mt-1 text-sm font-semibold text-slate-100">{tool.name}</p>
-                </div>
-                <span className="mt-2 inline-flex items-center gap-1 font-mono text-xs text-sky-300">
-                  Official Site <ExternalLink className="h-3 w-3" />
-                </span>
-              </a>
-            ))}
-          </div>
-        </div>
+        <DefenseToolsPanel
+          variant="full"
+          heading="Active Containment & Protection Tools"
+          subheading="Rotate compromised passwords and revoke sessions from a clean device first, then enable malicious domain blocking and offline system scans."
+          className="mt-5"
+        />
       </div>
     </section>
   );

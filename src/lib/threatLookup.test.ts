@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { getAllTools, getSiteDomain } from './env';
+import { getConfiguredTools, getSiteDomain, getToolInfo, isValidHttpsUrl } from './env';
 import { formatOutcomeBadge, formatUtcTimestamp, truncateIndicator } from './formatters';
 import { extractDomainParts } from './rdap';
 import {
@@ -83,13 +83,19 @@ describe('PortScamWatch 3-tier lookup, RDAP helpers & data contracts', () => {
     expect(exeRes.verdictLabel).toBe('MATCHED IN VENDOR ADVISORIES');
   });
 
-  it('VERDICT B: google.com -> Established Domain (never labeled Malicious)', () => {
-    const res = lookupThreat('google.com', threatsData.threats);
-    expect(res.tier).toBe('ESTABLISHED_DOMAIN');
-    expect(res.verdictLabel).toBe('ESTABLISHED DOMAIN — NOT IN THREAT LISTS');
-    expect(res.verdictLabel.toUpperCase()).not.toContain('MALICIOUS');
-    expect(res.isKnownEstablishedDomain).toBe(true);
-    expect(res.matches).toHaveLength(0);
+  it('VERDICT B: google.com & rockstargames.com -> Established Domain (never false-positive on lookalikes)', () => {
+    for (const domain of ['google.com', 'rockstargames.com']) {
+      const res = lookupThreat(domain, threatsData.threats);
+      expect(res.tier).toBe('ESTABLISHED_DOMAIN');
+      expect(res.verdictLabel).toBe('ESTABLISHED DOMAIN — NOT IN THREAT LISTS');
+      expect(res.verdictLabel.toUpperCase()).not.toContain('MALICIOUS');
+      expect(res.isKnownEstablishedDomain).toBe(true);
+      expect(res.matches).toHaveLength(0);
+    }
+
+    // Lookalike domains in threats.json must still match VERDICT A
+    const lookalike = lookupThreat('contact-rockstargames.com', threatsData.threats);
+    expect(lookalike.tier).toBe('CONFIRMED_THREAT');
 
     const agedRdap: RdapDomainInfo = {
       domain: 'example-old-site.org',
@@ -161,12 +167,23 @@ describe('PortScamWatch 3-tier lookup, RDAP helpers & data contracts', () => {
     expect(disclaimers.affiliateDisclosure).toBeTruthy();
 
     expect(getSiteDomain()).toBe('portscamwatch.com');
-    const tools = getAllTools();
-    expect(tools.map((t) => t.url)).toEqual([
-      'https://www.malwarebytes.com/',
-      'https://www.bitdefender.com/',
-      'https://nordpass.com/',
-      'https://nordvpn.com/',
+
+    // Without VITE_*_URL env vars set, zero tool buttons are returned
+    expect(getConfiguredTools({})).toEqual([]);
+    expect(getToolInfo('nordvpn', {})).toBeNull();
+    expect(isValidHttpsUrl('http://insecure.example.com')).toBeUndefined();
+
+    // With only NordVPN and NordPass https:// URLs configured, only those two render
+    const configured = getConfiguredTools({
+      VITE_NORDPASS_URL: 'https://nordpass.com/example-partner',
+      VITE_NORDVPN_URL: 'https://nordvpn.com/example-partner',
+      VITE_MALWAREBYTES_URL: '',
+      VITE_BITDEFENDER_URL: 'http://not-https.example.com',
+    });
+    expect(configured.map((t) => t.key)).toEqual(['nordpass', 'nordvpn']);
+    expect(configured.map((t) => t.url)).toEqual([
+      'https://nordpass.com/example-partner',
+      'https://nordvpn.com/example-partner',
     ]);
 
     const files = [

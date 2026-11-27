@@ -30,7 +30,23 @@ function isDescriptiveProse(rawTarget: string): boolean {
   );
 }
 
-function isIndicatorMatch(normalizedQuery: string, rawTarget: string): boolean {
+function isBoundaryMatch(haystack: string, needle: string): boolean {
+  const idx = haystack.indexOf(needle);
+  if (idx === -1) return false;
+  const before = idx > 0 ? haystack[idx - 1] : '';
+  const afterIdx = idx + needle.length;
+  const after = afterIdx < haystack.length ? haystack[afterIdx] : '';
+
+  const validBefore = before === '' || !/[a-z0-9-]/i.test(before);
+  const validAfter = after === '' || !/[a-z0-9-]/i.test(after);
+  return validBefore && validAfter;
+}
+
+function isIndicatorMatch(
+  normalizedQuery: string,
+  rawTarget: string,
+  queryIsDomain: boolean,
+): boolean {
   const normalizedTarget = normalizeIndicator(rawTarget);
   if (!normalizedQuery || !normalizedTarget) return false;
 
@@ -42,11 +58,13 @@ function isIndicatorMatch(normalizedQuery: string, rawTarget: string): boolean {
     return false;
   }
 
-  if (normalizedTarget.length >= 5 && normalizedQuery.includes(normalizedTarget)) {
+  if (normalizedTarget.length >= 5 && isBoundaryMatch(normalizedQuery, normalizedTarget)) {
     return true;
   }
 
-  if (normalizedQuery.length >= 6 && normalizedTarget.includes(normalizedQuery)) {
+  // Only allow partial-query matching inside longer targets when the query is NOT a domain
+  // (or at strict token boundaries), preventing e.g. rockstargames.com matching contact-rockstargames.com.
+  if (!queryIsDomain && normalizedQuery.length >= 6 && isBoundaryMatch(normalizedTarget, normalizedQuery)) {
     return true;
   }
 
@@ -97,7 +115,9 @@ export function lookupThreat(
 
   const matches = threats.filter((entry) => {
     const candidates = [...entry.indicators, ...entry.hostArtifacts];
-    return candidates.some((candidate) => isIndicatorMatch(normalizedQuery, candidate));
+    return candidates.some((candidate) =>
+      isIndicatorMatch(normalizedQuery, candidate, domainParts !== null),
+    );
   });
 
   if (matches.length > 0) {

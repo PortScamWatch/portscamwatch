@@ -728,6 +728,27 @@ function generatePreviewHtml({ og, profile, xCards, tiktokSlides }) {
     }),
   );
 
+  const shortsDir = path.join(ROOT_DIR, 'launch-assets/shorts');
+  const existingShorts = fs.existsSync(shortsDir)
+    ? fs.readdirSync(shortsDir).filter((f) => f.endsWith('.mp4')).sort()
+    : [];
+  const shortsHtml = existingShorts.length > 0
+    ? `<!-- SHORTS_SECTION_START -->
+  <h2>5. Silent Shorts (1080x1920 MP4)</h2>
+  <div class="strip-tiktok">
+    ${existingShorts
+      .map(
+        (file) => `
+    <div class="card">
+      <video src="shorts/${file}" controls muted loop playsinline style="width:100%;border-radius:6px;border:1px solid #1e293b;background:#000;display:block;"></video>
+      <div class="meta">${file}</div>
+    </div>`,
+      )
+      .join('')}
+  </div>
+  <!-- SHORTS_SECTION_END -->`
+    : '';
+
   const html = `<!doctype html>
 <html lang="en">
 <head>
@@ -873,6 +894,8 @@ function generatePreviewHtml({ og, profile, xCards, tiktokSlides }) {
   </div>`,
     )
     .join('')}
+
+  ${shortsHtml}
 
   <script>
     document.getElementById('toggleSafe').addEventListener('change', (e) => {

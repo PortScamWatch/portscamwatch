@@ -17,6 +17,7 @@ import {
 import { formatDomainAge, formatUtcTimestamp } from '../lib/formatters';
 import { extractDomainParts, fetchRdapDomainInfo } from '../lib/rdap';
 import type { LookupResult, RdapDomainInfo, ThreatsMeta } from '../types/data';
+import { DefenseToolsPanel } from './DefenseToolsPanel';
 
 export type AppPage = 'lookup' | 'triage' | 'advisories' | 'export';
 
@@ -225,6 +226,18 @@ export function StatusAndVerifier({
               </span>
             </div>
 
+            {lookupResult.rdap?.status === 'ok' &&
+              lookupResult.rdap.registeredYear !== null &&
+              lookupResult.rdap.ageDays !== null && (
+                <div className="mt-3 flex flex-wrap gap-2 font-mono text-xs text-slate-300">
+                  <span className="inline-flex items-center gap-1.5 rounded border border-red-500/30 bg-[#0b0f17] px-2.5 py-1">
+                    <Globe className="h-3.5 w-3.5 text-red-400" />
+                    RDAP Registered: {lookupResult.rdap.registeredYear} (
+                    {formatDomainAge(lookupResult.rdap.ageDays)})
+                  </span>
+                </div>
+              )}
+
             <div className="mt-4 space-y-4">
               {lookupResult.matches.map((match) => (
                 <div
@@ -279,6 +292,12 @@ export function StatusAndVerifier({
                 </div>
               ))}
             </div>
+
+            <DefenseToolsPanel
+              variant="compact"
+              heading="Immediate Containment & Protection Tools"
+              className="mt-4"
+            />
 
             <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-slate-800/80 pt-4">
               <div className="flex flex-wrap items-center gap-2">
@@ -416,6 +435,11 @@ export function StatusAndVerifier({
                 GTA 6 build exists ({meta.officialPlatforms.join(' / ')} only).
               </p>
 
+              <DefenseToolsPanel
+                variant="compact"
+                heading="Stay Protected Against Unlisted Lures"
+              />
+
               <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-800 pt-3">
                 <span className="text-xs text-slate-400">
                   Already downloaded or opened a file from this source?
@@ -503,6 +527,13 @@ export function StatusAndVerifier({
           </span>
         </button>
       </div>
+
+      {/* Homepage Recommended Protection Stack (above Removal Guides accordion) */}
+      <DefenseToolsPanel
+        variant="full"
+        heading="Recommended Protection Stack"
+        subheading="Rotate compromised logins and active sessions, block lookalike scam domains, and scan suspicious downloads."
+      />
     </section>
   );
 }
