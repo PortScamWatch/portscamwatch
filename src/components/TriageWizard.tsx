@@ -142,12 +142,12 @@ export function TriageWizard({ triageTree, disclaimers: _disclaimers }: TriageWi
               className="rounded-lg border border-slate-800 bg-[#0b0f17] p-4"
             >
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div className="space-y-1 sm:pr-4">
-                  <p className="text-sm font-medium text-slate-100">
+                <div className="min-w-0 space-y-1 sm:pr-4">
+                  <p className="text-sm font-medium text-slate-100 [overflow-wrap:anywhere]">
                     <span className="mr-2 font-mono text-xs text-slate-400">0{idx + 1}.</span>
                     {question.prompt}
                   </p>
-                  <p className="text-xs text-slate-400">
+                  <p className="text-xs text-slate-400 [overflow-wrap:anywhere]">
                     {question.helperText.replace(/UNVERIFIED_HIGH_RISK/g, 'Unverified / High Risk')}
                   </p>
                 </div>
@@ -204,19 +204,21 @@ export function TriageWizard({ triageTree, disclaimers: _disclaimers }: TriageWi
 
         <ol className="mt-4 space-y-2.5">
           {outcome.steps.map((step) => {
-            const stepTool = step.recommendedToolKey ? getToolInfo(step.recommendedToolKey) : null;
+            const stepTool = step.recommendedToolKey
+              ? getToolInfo(step.recommendedToolKey, 'triage')
+              : null;
             return (
               <li
                 key={step.order}
                 className="rounded-lg border border-slate-800 bg-[#0b0f17]/90 p-3.5"
               >
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                  <div>
-                    <p className="text-sm font-semibold text-slate-100">
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-slate-100 [overflow-wrap:anywhere]">
                       <span className="mr-2 font-mono text-slate-400">#{step.order}</span>
                       {step.title}
                     </p>
-                    <p className="mt-1 text-xs leading-relaxed text-slate-400">{step.detail}</p>
+                    <p className="mt-1 text-xs leading-relaxed text-slate-400 [overflow-wrap:anywhere]">{step.detail}</p>
                   </div>
                   {stepTool && (
                     <a
@@ -237,6 +239,7 @@ export function TriageWizard({ triageTree, disclaimers: _disclaimers }: TriageWi
 
         <DefenseToolsPanel
           variant="full"
+          placement="triage"
           heading="Active Containment & Protection Tools"
           subheading="Rotate compromised passwords and revoke sessions from a clean device first, then enable malicious domain blocking and offline system scans."
           className="mt-5"

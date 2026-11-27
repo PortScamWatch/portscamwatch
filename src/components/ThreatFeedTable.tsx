@@ -12,11 +12,16 @@ import type { ThreatEntry } from '../types/data';
 interface ThreatFeedTableProps {
   threats: ThreatEntry[];
   onInspectIndicator?: (indicator: string) => void;
+  onOpenExports?: () => void;
 }
 
 const PREVIEW_IOC_LIMIT = 3;
 
-export function ThreatFeedTable({ threats, onInspectIndicator }: ThreatFeedTableProps) {
+export function ThreatFeedTable({
+  threats,
+  onInspectIndicator,
+  onOpenExports,
+}: ThreatFeedTableProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [vendorFilter, setVendorFilter] = useState('ALL');
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -67,6 +72,18 @@ export function ThreatFeedTable({ threats, onInspectIndicator }: ThreatFeedTable
           <p className="mt-1 text-xs text-slate-400 sm:text-sm">
             Showing {filtered.length} of {threats.length} published advisories. Expand any row for
             full SHA-256 hashes, host artifacts, and vendor writeups.
+            {onOpenExports && (
+              <>
+                {' '}
+                <button
+                  type="button"
+                  onClick={onOpenExports}
+                  className="font-mono text-sky-400 underline hover:text-sky-300 cursor-pointer"
+                >
+                  Export blocklist / CSV / JSON →
+                </button>
+              </>
+            )}
           </p>
         </div>
 

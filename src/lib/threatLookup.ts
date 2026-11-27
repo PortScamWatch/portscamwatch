@@ -1,4 +1,5 @@
 import { extractDomainParts, isKnownEstablishedDomain } from './rdap';
+import { normalizeIndicator } from '../utils/normalizeInput';
 import type {
   LookupResult,
   RdapDomainInfo,
@@ -7,19 +8,7 @@ import type {
   TriageQuestion,
 } from '../types/data';
 
-/**
- * Normalizes URLs, defanged domains, Windows paths, filenames, and hashes
- * for deterministic indicator matching.
- */
-export function normalizeIndicator(raw: string): string {
-  return raw
-    .trim()
-    .toLowerCase()
-    .replace(/^https?:\/\//, '')
-    .replace(/^www\./, '')
-    .replace(/\[\.\]/g, '.')
-    .replace(/\/+$/, '');
-}
+export { normalizeIndicator };
 
 function isDescriptiveProse(rawTarget: string): boolean {
   const wordCount = rawTarget.trim().split(/\s+/).length;

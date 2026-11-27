@@ -1,4 +1,5 @@
 import type { RdapDomainInfo } from '../types/data';
+import { normalizeIndicator } from '../utils/normalizeInput';
 
 export const KNOWN_ESTABLISHED_DOMAINS = [
   'rockstargames.com',
@@ -71,13 +72,9 @@ export function extractDomainParts(rawInput: string): DomainParts | null {
     return null;
   }
 
-  const cleaned = trimmed
-    .toLowerCase()
-    .replace(/^https?:\/\//, '')
-    .replace(/\[\.\]/g, '.');
-
+  const cleaned = normalizeIndicator(trimmed);
   const authority = cleaned.split(/[/?#]/)[0]?.trim() ?? '';
-  const hostname = authority.replace(/:\d+$/, '').replace(/^www\./, '');
+  const hostname = authority.replace(/:\d+$/, '');
 
   if (!hostname || hostname.length > 253) return null;
   if (!/^[a-z0-9-]+(\.[a-z0-9-]+)+$/.test(hostname)) return null;

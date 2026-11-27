@@ -17,6 +17,11 @@ dist-ssr
 # Local social media / launch assets (never commit to public repo)
 launch-assets/
 
+# Test & Playwright artifacts
+playwright-report/
+test-results/
+.playwright-tmp/
+
 # Editor
 .vscode/*
 !.vscode/extensions.json

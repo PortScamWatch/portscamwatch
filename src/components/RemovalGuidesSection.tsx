@@ -151,11 +151,11 @@ export function RemovalGuidesSection({
             <article
               key={guide.anchorId}
               id={guide.anchorId}
-              className="flex flex-col justify-between rounded-lg border border-slate-800 bg-[#0b0f17] p-4"
+              className="flex min-w-0 flex-col justify-between rounded-lg border border-slate-800 bg-[#0b0f17] p-4"
             >
-              <div>
+              <div className="min-w-0">
                 <p className="font-mono text-[11px] text-slate-400">{guide.vendorLabel}</p>
-                <h3 className="mt-1 font-mono text-sm font-semibold text-slate-100 break-words">
+                <h3 className="mt-1 font-mono text-sm font-semibold text-slate-100 break-all">
                   {guide.title}
                 </h3>
                 <p className="mt-2 text-xs leading-relaxed text-slate-300">{guide.summary}</p>
@@ -165,6 +165,7 @@ export function RemovalGuidesSection({
 
                 <DefenseToolsPanel
                   variant="compact"
+                  placement="guide"
                   heading="Recovery & Prevention Tools"
                   className="mt-3"
                 />

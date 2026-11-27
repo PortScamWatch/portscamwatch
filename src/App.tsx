@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
-import { FileImage, ListFilter, Search, Shield, ShieldAlert } from 'lucide-react';
+import { Database, FileImage, ListFilter, Search, Shield, ShieldAlert } from 'lucide-react';
+import { MethodologySection } from './components/MethodologySection';
+import { OpenIntelExports } from './components/OpenIntelExports';
 import { RemovalGuidesSection } from './components/RemovalGuidesSection';
 import { ShareAlertCard } from './components/ShareAlertCard';
 import { StatusAndVerifier, type AppPage } from './components/StatusAndVerifier';
@@ -21,12 +23,19 @@ interface LoadedAppData {
   disclaimers: DisclaimersData;
 }
 
-const VALID_PAGES: AppPage[] = ['lookup', 'triage', 'advisories', 'export'];
+const VALID_PAGES: AppPage[] = ['lookup', 'triage', 'advisories', 'exports', 'export'];
 
 function readHashPage(): AppPage {
   if (typeof window === 'undefined') return 'lookup';
   const raw = window.location.hash.replace(/^#\/?/, '').toLowerCase() as AppPage;
   return VALID_PAGES.includes(raw) ? raw : 'lookup';
+}
+
+function readInitialSearchQuery(): string | null {
+  if (typeof window === 'undefined') return null;
+  const q = new URLSearchParams(window.location.search).get('q');
+  const trimmed = q?.trim() ?? '';
+  return trimmed.length > 0 ? trimmed.slice(0, 512) : null;
 }
 
 async function fetchJson<T>(url: string): Promise<T> {
@@ -41,8 +50,10 @@ export function App() {
   const [data, setData] = useState<LoadedAppData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [lookupResult, setLookupResult] = useState<LookupResult | null>(null);
-  const [activePage, setActivePage] = useState<AppPage>(() => readHashPage());
-  const [pendingQuery, setPendingQuery] = useState<string | null>(null);
+  const [activePage, setActivePage] = useState<AppPage>(() => {
+    return readInitialSearchQuery() ? 'lookup' : readHashPage();
+  });
+  const [pendingQuery, setPendingQuery] = useState<string | null>(() => readInitialSearchQuery());
 
   useEffect(() => {
     let cancelled = false;
@@ -77,11 +88,16 @@ export function App() {
 
   const navigate = (page: AppPage) => {
     setActivePage(page);
-    const nextHash = `#${page}`;
-    if (window.location.hash !== nextHash) {
-      window.history.pushState(null, '', nextHash);
-    }
+    const url = new URL(window.location.href);
+    url.hash = `#${page}`;
+    window.history.pushState(null, '', `${url.pathname}${url.search}${url.hash}`);
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const openMethodology = () => {
+    window.location.hash = '#methodology';
+    const el = document.getElementById('methodology');
+    el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
   const siteDomain = getSiteDomain(data?.threatsData.meta.siteDomain);
@@ -111,6 +127,7 @@ export function App() {
       badge: data ? String(data.threatsData.threats.length) : undefined,
       icon: ListFilter,
     },
+    { id: 'exports', label: 'Open Intel', icon: Database },
     { id: 'export', label: 'Export Card', icon: FileImage },
   ];
 
@@ -146,7 +163,7 @@ export function App() {
                   type="button"
                   onClick={() => navigate(item.id)}
                   aria-current={isActive ? 'page' : undefined}
-                  className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 font-mono text-xs font-medium transition cursor-pointer ${
+                  className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 font-mono text-xs font-medium transition cursor-pointer ${
                     isActive
                       ? 'border-sky-500/50 bg-sky-500/15 text-sky-200'
                       : 'border-slate-800 bg-[#111827] text-slate-300 hover:border-slate-600 hover:text-white'
@@ -162,6 +179,13 @@ export function App() {
                 </button>
               );
             })}
+            <button
+              type="button"
+              onClick={openMethodology}
+              className="rounded-lg border border-transparent px-2 py-1.5 font-mono text-xs text-slate-400 transition hover:text-slate-200 cursor-pointer"
+            >
+              Methodology
+            </button>
           </nav>
         </div>
       </header>
@@ -185,6 +209,7 @@ export function App() {
         {data && activePage === 'lookup' && (
           <StatusAndVerifier
             meta={data.threatsData.meta}
+            threats={data.threatsData.threats}
             totalAdvisories={data.threatsData.threats.length}
             totalIocs={totalIocs}
             lookupResult={lookupResult}
@@ -207,7 +232,12 @@ export function App() {
           <ThreatFeedTable
             threats={data.threatsData.threats}
             onInspectIndicator={handleInspectFromFeed}
+            onOpenExports={() => navigate('exports')}
           />
+        )}
+
+        {data && activePage === 'exports' && (
+          <OpenIntelExports threatsData={data.threatsData} />
         )}
 
         {data && activePage === 'export' && (
@@ -228,14 +258,42 @@ export function App() {
         />
       )}
 
+      {data && <MethodologySection />}
+
       {data && (
         <footer className="border-t border-slate-800 bg-[#0b0f17] py-6">
-          <div className="mx-auto max-w-5xl space-y-2 px-4 text-xs leading-relaxed text-slate-400 sm:px-6">
-            <p className="font-mono text-slate-300">
-              {data.disclaimers.siteName.toLowerCase() === siteDomain.toLowerCase()
-                ? siteDomain
-                : `${data.disclaimers.siteName} (${siteDomain})`}
-            </p>
+          <div className="mx-auto max-w-5xl space-y-2.5 px-4 text-xs leading-relaxed text-slate-400 sm:px-6">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="font-mono text-slate-300">
+                {data.disclaimers.siteName.toLowerCase() === siteDomain.toLowerCase()
+                  ? siteDomain
+                  : `${data.disclaimers.siteName} (${siteDomain})`}
+              </p>
+              <div className="flex flex-wrap items-center gap-3 font-mono text-[11px]">
+                <button
+                  type="button"
+                  onClick={() => navigate('exports')}
+                  className="text-slate-300 underline hover:text-white cursor-pointer"
+                >
+                  Open IOC Exports
+                </button>
+                <button
+                  type="button"
+                  onClick={openMethodology}
+                  className="text-slate-300 underline hover:text-white cursor-pointer"
+                >
+                  Methodology &amp; Threat Model
+                </button>
+                <a
+                  href="/data/threats.json"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-slate-300 underline hover:text-white"
+                >
+                  threats.json
+                </a>
+              </div>
+            </div>
             <p>{data.disclaimers.asIsDisclaimer}</p>
             <p>{data.disclaimers.nonAffiliationNotice}</p>
           </div>

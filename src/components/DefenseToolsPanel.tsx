@@ -1,11 +1,12 @@
 import { ExternalLink, Shield } from 'lucide-react';
-import { getConfiguredTools } from '../lib/env';
+import { getConfiguredTools, type AffiliatePlacement } from '../config/env';
 
 const INLINE_FTC_DISCLOSURE =
   'Disclosure: Independent affiliate links. We may earn a commission at no extra cost; affiliate links never influence threat verdicts.';
 
 export interface DefenseToolsPanelProps {
   variant: 'compact' | 'full';
+  placement: AffiliatePlacement;
   heading?: string;
   subheading?: string;
   className?: string;
@@ -13,11 +14,12 @@ export interface DefenseToolsPanelProps {
 
 export function DefenseToolsPanel({
   variant,
+  placement,
   heading,
   subheading,
   className = '',
 }: DefenseToolsPanelProps) {
-  const tools = getConfiguredTools();
+  const tools = getConfiguredTools(placement);
   if (tools.length === 0) {
     return null;
   }
@@ -25,6 +27,7 @@ export function DefenseToolsPanel({
   if (variant === 'compact') {
     return (
       <div
+        data-testid={`defense-tools-compact-${placement}`}
         className={`rounded-lg border border-slate-800 bg-[#0b0f17] p-3.5 ${className}`.trim()}
       >
         {heading && (
@@ -41,14 +44,15 @@ export function DefenseToolsPanel({
               href={tool.url}
               target="_blank"
               rel="noopener noreferrer sponsored"
-              className="group flex items-center justify-between gap-2.5 rounded-md border border-slate-700/90 bg-[#111827] px-3 py-2.5 text-left transition hover:border-sky-500/60 hover:bg-slate-800/80"
+              data-tool-key={tool.key}
+              className="group flex min-w-0 items-center justify-between gap-2.5 rounded-md border border-slate-700/90 bg-[#111827] px-3 py-2.5 text-left transition hover:border-sky-500/60 hover:bg-slate-800/80"
             >
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <p className="truncate text-xs font-semibold text-slate-100 group-hover:text-white">
-                  {tool.shortLabel}
+                  {tool.name}
                 </p>
                 <p className="truncate font-mono text-[10px] text-slate-400">
-                  {tool.category}
+                  {tool.shortLabel}
                 </p>
               </div>
               <ExternalLink className="h-3.5 w-3.5 shrink-0 text-sky-400 transition group-hover:text-sky-300" />
@@ -74,6 +78,7 @@ export function DefenseToolsPanel({
 
   return (
     <section
+      data-testid={`defense-tools-full-${placement}`}
       aria-label={heading ?? 'Recommended Protection Stack'}
       className={`rounded-xl border border-slate-800 bg-[#111827] p-5 sm:p-6 ${className}`.trim()}
     >
@@ -95,9 +100,9 @@ export function DefenseToolsPanel({
         {tools.map((tool) => (
           <div
             key={tool.key}
-            className="flex flex-col justify-between rounded-lg border border-slate-800 bg-[#0b0f17] p-4"
+            className="flex min-w-0 flex-col justify-between rounded-lg border border-slate-800 bg-[#0b0f17] p-4"
           >
-            <div>
+            <div className="min-w-0">
               <span className="font-mono text-[10px] uppercase tracking-wider text-sky-400">
                 {tool.category}
               </span>
@@ -111,9 +116,10 @@ export function DefenseToolsPanel({
               href={tool.url}
               target="_blank"
               rel="noopener noreferrer sponsored"
-              className="mt-4 inline-flex items-center justify-between gap-2 rounded-md border border-slate-700 bg-[#111827] px-3 py-2 font-mono text-xs font-semibold text-slate-100 transition hover:border-sky-500/60 hover:bg-slate-800 hover:text-white"
+              data-tool-key={tool.key}
+              className="mt-4 flex min-w-0 items-center justify-between gap-2 rounded-md border border-slate-700 bg-[#111827] px-3 py-2 font-mono text-xs font-semibold leading-snug text-slate-100 transition hover:border-sky-500/60 hover:bg-slate-800 hover:text-white"
             >
-              <span>{tool.actionLabel}</span>
+              <span className="min-w-0 break-words">{tool.actionLabel}</span>
               <ExternalLink className="h-3.5 w-3.5 shrink-0 text-sky-400" />
             </a>
           </div>

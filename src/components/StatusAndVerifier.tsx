@@ -1,28 +1,42 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type DragEvent, type FormEvent } from 'react';
 import {
   AlertOctagon,
   AlertTriangle,
   ArrowRight,
+  Check,
   Clock,
+  Copy,
+  Database,
   ExternalLink,
   FileImage,
+  FileSearch,
   Globe,
   Info,
+  Link2,
   ListFilter,
   Loader2,
   Search,
   ShieldAlert,
   ShieldCheck,
+  Upload,
 } from 'lucide-react';
 import { formatDomainAge, formatUtcTimestamp } from '../lib/formatters';
 import { extractDomainParts, fetchRdapDomainInfo } from '../lib/rdap';
-import type { LookupResult, RdapDomainInfo, ThreatsMeta } from '../types/data';
+import type { LookupResult, RdapDomainInfo, ThreatEntry, ThreatsMeta } from '../types/data';
+import {
+  buildNativeHashCommands,
+  computeFileSha256,
+  formatBytes,
+  type FileHashResult,
+} from '../utils/fileHash';
+import { inspectNormalizedInput } from '../utils/normalizeInput';
 import { DefenseToolsPanel } from './DefenseToolsPanel';
 
-export type AppPage = 'lookup' | 'triage' | 'advisories' | 'export';
+export type AppPage = 'lookup' | 'triage' | 'advisories' | 'exports' | 'export';
 
 interface StatusAndVerifierProps {
   meta: ThreatsMeta;
+  threats: ThreatEntry[];
   totalAdvisories: number;
   totalIocs: number;
   lookupResult: LookupResult | null;
@@ -33,19 +47,24 @@ interface StatusAndVerifierProps {
   onNavigate: (page: AppPage) => void;
 }
 
-const SAMPLE_INDICATORS = [
-  'velmontriq.net',
-  'google.com',
-  'GTA6Cloud.exe',
-  'random-unlisted-port.exe',
-];
-
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+function syncQueryParam(rawQuery: string | null) {
+  if (typeof window === 'undefined') return;
+  const url = new URL(window.location.href);
+  if (rawQuery && rawQuery.trim()) {
+    url.searchParams.set('q', rawQuery.trim());
+  } else {
+    url.searchParams.delete('q');
+  }
+  window.history.replaceState(null, '', `${url.pathname}${url.search}${url.hash}`);
+}
+
 export function StatusAndVerifier({
   meta,
+  threats,
   totalAdvisories,
   totalIocs,
   lookupResult,
@@ -58,13 +77,34 @@ export function StatusAndVerifier({
   const [inputValue, setInputValue] = useState(lookupResult?.query ?? '');
   const [isInspecting, setIsInspecting] = useState(false);
   const [inspectionStep, setInspectionStep] = useState('');
+  const [showFileHasher, setShowFileHasher] = useState(false);
+  const [isDraggingFile, setIsDraggingFile] = useState(false);
+  const [isHashingFile, setIsHashingFile] = useState(false);
+  const [fileHashResult, setFileHashResult] = useState<FileHashResult | null>(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
   const activeRunId = useRef(0);
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const sampleChips = useMemo(() => {
+    const allDisplay = threats.flatMap((t) => t.displayIndicators);
+    const allNorm = new Set(threats.flatMap((t) => t.indicators.map((i) => i.toLowerCase())));
+    const candidates = [
+      allDisplay.find((d) => d.toLowerCase() === 'gta6cloud.exe'),
+      allDisplay.find((d) => d.toLowerCase().includes('velmontriq')),
+      allNorm.has('gta6download.club') ? 'gta6download.club' : undefined,
+      'rockstargames.com',
+    ].filter((v): v is string => Boolean(v));
+    return Array.from(new Set(candidates));
+  }, [threats]);
 
   const runInspection = async (rawQuery: string) => {
     const trimmed = rawQuery.trim();
     if (!trimmed) return;
 
     const runId = ++activeRunId.current;
+    syncQueryParam(trimmed);
     setIsInspecting(true);
     setInspectionStep('Normalizing indicator...');
 
@@ -104,23 +144,93 @@ export function StatusAndVerifier({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pendingQuery]);
 
+  const handleReset = () => {
+    activeRunId.current += 1;
+    setIsInspecting(false);
+    setInspectionStep('');
+    setInputValue('');
+    setFileHashResult(null);
+    syncQueryParam(null);
+    onClear();
+  };
+
+  // Keyboard shortcuts: "/" focuses search input, "Escape" clears/blurs cleanly
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      const tag = target?.tagName?.toUpperCase();
+      const isEditing =
+        tag === 'INPUT' ||
+        tag === 'TEXTAREA' ||
+        tag === 'SELECT' ||
+        Boolean(target?.isContentEditable);
+
+      if (e.key === '/' && !isEditing && !e.metaKey && !e.ctrlKey && !e.altKey) {
+        e.preventDefault();
+        inputRef.current?.focus();
+        inputRef.current?.select();
+      } else if (e.key === 'Escape') {
+        if (document.activeElement === inputRef.current || inputValue || lookupResult) {
+          handleReset();
+          inputRef.current?.blur();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [inputValue, lookupResult]);
+
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     void runInspection(inputValue);
   };
 
   const handleSampleClick = (sample: string) => {
+    setFileHashResult(null);
     setInputValue(sample);
     void runInspection(sample);
   };
 
-  const handleReset = () => {
-    activeRunId.current += 1;
-    setIsInspecting(false);
-    setInspectionStep('');
-    setInputValue('');
-    onClear();
+  const handleCopy = async (id: string, value: string) => {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopiedId(id);
+      setTimeout(() => setCopiedId((prev) => (prev === id ? null : prev)), 2200);
+    } catch {
+      // Clipboard unavailable in restricted contexts
+    }
   };
+
+  const handleCopyPermalink = (query: string) => {
+    if (typeof window === 'undefined') return;
+    const shareUrl = `${window.location.origin}/?q=${encodeURIComponent(query.trim())}`;
+    void handleCopy('permalink', shareUrl);
+  };
+
+  const processLocalFile = async (file: File | null | undefined) => {
+    if (!file) return;
+    setIsHashingFile(true);
+    setFileHashResult(null);
+    const result = await computeFileSha256(file);
+    setIsHashingFile(false);
+    setFileHashResult(result);
+
+    if (result.ok) {
+      setInputValue(result.sha256);
+      void runInspection(result.sha256);
+    }
+  };
+
+  const handleDrop = (e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDraggingFile(false);
+    const file = e.dataTransfer.files?.[0];
+    void processLocalFile(file);
+  };
+
+  const normalizationInfo = lookupResult ? inspectNormalizedInput(lookupResult.query) : null;
 
   return (
     <section aria-label="Threat Lookup" className="space-y-5">
@@ -149,13 +259,20 @@ export function StatusAndVerifier({
           <div className="relative flex-1">
             <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <input
+              ref={inputRef}
               type="text"
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               placeholder="Enter domain, URL, filename (e.g. GTA6Cloud.exe), Windows path, or SHA-256"
               aria-label="Suspicious URL, domain, filename, Windows path, or SHA-256 hash"
-              className="w-full rounded-lg border border-slate-700/90 bg-[#0b0f17] py-3.5 pl-10 pr-4 font-mono text-sm text-slate-100 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none focus:ring-1 focus:ring-sky-400/40"
+              className="w-full rounded-lg border border-slate-700/90 bg-[#0b0f17] py-3.5 pl-10 pr-12 font-mono text-sm text-slate-100 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none focus:ring-1 focus:ring-sky-400/40"
             />
+            <kbd
+              title="Press / to focus search"
+              className="pointer-events-none absolute right-3 top-1/2 hidden -translate-y-1/2 rounded border border-slate-700 bg-[#111827] px-1.5 py-0.5 font-mono text-[11px] text-slate-400 sm:inline-block"
+            >
+              /
+            </kbd>
           </div>
           <button
             type="submit"
@@ -173,10 +290,10 @@ export function StatusAndVerifier({
           </button>
         </form>
 
-        {/* Quick examples */}
+        {/* Quick examples + Local File SHA-256 Toggle */}
         <div className="mt-3.5 flex flex-wrap items-center gap-2 text-xs">
-          <span className="text-slate-400">Examples:</span>
-          {SAMPLE_INDICATORS.map((sample) => (
+          <span className="text-slate-400">Try:</span>
+          {sampleChips.map((sample) => (
             <button
               key={sample}
               type="button"
@@ -187,7 +304,22 @@ export function StatusAndVerifier({
               {sample}
             </button>
           ))}
-          {(lookupResult || isInspecting) && (
+
+          <button
+            type="button"
+            onClick={() => setShowFileHasher((prev) => !prev)}
+            aria-expanded={showFileHasher}
+            className={`inline-flex items-center gap-1.5 rounded border px-2.5 py-1 font-mono text-xs transition cursor-pointer ${
+              showFileHasher
+                ? 'border-sky-500/50 bg-sky-500/15 text-sky-200'
+                : 'border-slate-700 bg-[#0b0f17] text-slate-200 hover:border-slate-500'
+            }`}
+          >
+            <FileSearch className="h-3.5 w-3.5 text-sky-400" />
+            Hash a Local File (Never Uploaded)
+          </button>
+
+          {(lookupResult || isInspecting || fileHashResult) && (
             <button
               type="button"
               onClick={handleReset}
@@ -197,6 +329,142 @@ export function StatusAndVerifier({
             </button>
           )}
         </div>
+
+        {/* Client-Side SHA-256 Local File Hasher */}
+        {showFileHasher && (
+          <div className="mt-4 rounded-xl border border-slate-800 bg-[#0b0f17] p-4 space-y-3">
+            <div
+              onDragOver={(e) => {
+                e.preventDefault();
+                setIsDraggingFile(true);
+              }}
+              onDragLeave={() => setIsDraggingFile(false)}
+              onDrop={handleDrop}
+              className={`flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed px-4 py-5 text-center transition ${
+                isDraggingFile
+                  ? 'border-sky-400 bg-sky-500/10'
+                  : 'border-slate-700 bg-[#111827]/60'
+              }`}
+            >
+              <Upload className="h-5 w-5 text-sky-400" />
+              <p className="text-xs font-medium text-slate-200 sm:text-sm">
+                Drop a suspicious file here or select it to compute SHA-256 in your browser
+              </p>
+              <p className="text-[11px] text-slate-400">
+                Computed locally via Web Crypto API — zero bytes ever leave your device (max 256 MB
+                in-browser guard).
+              </p>
+              <input
+                ref={fileInputRef}
+                type="file"
+                aria-label="Choose a local file to hash SHA-256"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  void processLocalFile(f);
+                  e.target.value = '';
+                }}
+                className="sr-only"
+              />
+              <button
+                type="button"
+                disabled={isHashingFile}
+                onClick={() => fileInputRef.current?.click()}
+                className="mt-1 inline-flex items-center gap-1.5 rounded-md border border-slate-600 bg-[#0b0f17] px-3.5 py-1.5 font-mono text-xs font-semibold text-slate-100 transition hover:border-sky-400 cursor-pointer"
+              >
+                {isHashingFile ? (
+                  <>
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" /> Hashing...
+                  </>
+                ) : (
+                  'Select Local File'
+                )}
+              </button>
+            </div>
+
+            {fileHashResult?.ok && (
+              <div className="rounded-lg border border-slate-800 bg-[#111827] p-3.5 space-y-2">
+                <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+                  <span className="font-mono text-slate-300">
+                    File: <strong className="text-slate-100">{fileHashResult.fileName}</strong> (
+                    {formatBytes(fileHashResult.fileSize)})
+                  </span>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleCopy('sha256', fileHashResult.sha256)}
+                      className="inline-flex items-center gap-1 rounded border border-slate-700 bg-[#0b0f17] px-2.5 py-1 font-mono text-[11px] text-slate-200 hover:border-slate-500 cursor-pointer"
+                    >
+                      {copiedId === 'sha256' ? (
+                        <>
+                          <Check className="h-3 w-3 text-sky-400" /> Copied SHA-256
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="h-3 w-3" /> Copy SHA-256
+                        </>
+                      )}
+                    </button>
+                    <a
+                      href={`https://www.virustotal.com/gui/file/${fileHashResult.sha256}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 rounded border border-slate-700 bg-[#0b0f17] px-2.5 py-1 font-mono text-[11px] text-sky-300 hover:border-sky-500/60"
+                    >
+                      Check on VirusTotal <ExternalLink className="h-3 w-3" />
+                    </a>
+                  </div>
+                </div>
+                <p className="break-all font-mono text-xs text-sky-300">{fileHashResult.sha256}</p>
+              </div>
+            )}
+
+            {fileHashResult && !fileHashResult.ok && (
+              <div
+                role="alert"
+                className="rounded-lg border border-amber-500/50 bg-amber-500/10 p-3.5 space-y-2.5 text-xs text-amber-100"
+              >
+                <p className="font-medium leading-relaxed">{fileHashResult.message}</p>
+                {(() => {
+                  const cmds = buildNativeHashCommands(fileHashResult.fileName);
+                  return (
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      <div className="rounded border border-slate-800 bg-[#0b0f17] p-2.5">
+                        <div className="flex items-center justify-between gap-2 font-mono text-[10px] text-slate-400">
+                          <span>WINDOWS POWERSHELL</span>
+                          <button
+                            type="button"
+                            onClick={() => handleCopy('ps-hash', cmds.powershell)}
+                            className="text-sky-300 hover:underline cursor-pointer"
+                          >
+                            {copiedId === 'ps-hash' ? 'Copied' : 'Copy'}
+                          </button>
+                        </div>
+                        <code className="mt-1 block break-all font-mono text-[11px] text-slate-200">
+                          {cmds.powershell}
+                        </code>
+                      </div>
+                      <div className="rounded border border-slate-800 bg-[#0b0f17] p-2.5">
+                        <div className="flex items-center justify-between gap-2 font-mono text-[10px] text-slate-400">
+                          <span>MACOS / LINUX</span>
+                          <button
+                            type="button"
+                            onClick={() => handleCopy('unix-hash', cmds.unix)}
+                            className="text-sky-300 hover:underline cursor-pointer"
+                          >
+                            {copiedId === 'unix-hash' ? 'Copied' : 'Copy'}
+                          </button>
+                        </div>
+                        <code className="mt-1 block break-all font-mono text-[11px] text-slate-200">
+                          {cmds.unix}
+                        </code>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Progressive Inspection Status */}
         {isInspecting && (
@@ -221,10 +489,36 @@ export function StatusAndVerifier({
                 <AlertOctagon className="h-3.5 w-3.5" />
                 {lookupResult.verdictLabel}
               </span>
-              <span className="font-mono text-xs text-slate-300">
-                Indicator: {lookupResult.normalizedQuery.replace(/\./g, '[.]')}
-              </span>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="font-mono text-xs text-slate-300">
+                  Indicator: {lookupResult.normalizedQuery.replace(/\./g, '[.]')}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => handleCopyPermalink(lookupResult.query)}
+                  className="inline-flex items-center gap-1 rounded border border-slate-700 bg-[#0b0f17] px-2 py-1 font-mono text-[11px] text-slate-200 transition hover:border-slate-500 cursor-pointer"
+                >
+                  {copiedId === 'permalink' ? (
+                    <>
+                      <Check className="h-3 w-3 text-sky-400" /> Copied link
+                    </>
+                  ) : (
+                    <>
+                      <Link2 className="h-3 w-3" /> Copy verdict link
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
+
+            {normalizationInfo?.wasTransformed && (
+              <p className="mt-2 font-mono text-[11px] text-slate-300">
+                Normalized input →{' '}
+                <code className="rounded bg-[#0b0f17] px-1.5 py-0.5 text-sky-300">
+                  {normalizationInfo.normalized}
+                </code>
+              </p>
+            )}
 
             {lookupResult.rdap?.status === 'ok' &&
               lookupResult.rdap.registeredYear !== null &&
@@ -295,6 +589,7 @@ export function StatusAndVerifier({
 
             <DefenseToolsPanel
               variant="compact"
+              placement="verdict"
               heading="Immediate Containment & Protection Tools"
               className="mt-4"
             />
@@ -336,10 +631,36 @@ export function StatusAndVerifier({
                 <ShieldCheck className="h-3.5 w-3.5" />
                 {lookupResult.verdictLabel}
               </span>
-              <span className="font-mono text-xs text-slate-300">
-                Domain: {lookupResult.normalizedQuery}
-              </span>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="font-mono text-xs text-slate-300">
+                  Domain: {lookupResult.normalizedQuery}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => handleCopyPermalink(lookupResult.query)}
+                  className="inline-flex items-center gap-1 rounded border border-slate-700 bg-[#0b0f17] px-2 py-1 font-mono text-[11px] text-slate-200 transition hover:border-slate-500 cursor-pointer"
+                >
+                  {copiedId === 'permalink' ? (
+                    <>
+                      <Check className="h-3 w-3 text-sky-400" /> Copied link
+                    </>
+                  ) : (
+                    <>
+                      <Link2 className="h-3 w-3" /> Copy verdict link
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
+
+            {normalizationInfo?.wasTransformed && (
+              <p className="mt-2 font-mono text-[11px] text-slate-300">
+                Normalized input →{' '}
+                <code className="rounded bg-[#0b0f17] px-1.5 py-0.5 text-sky-300">
+                  {normalizationInfo.normalized}
+                </code>
+              </p>
+            )}
 
             <div className="mt-4 space-y-3 rounded-lg border border-slate-800 bg-[#0b0f17] p-4">
               <p className="text-sm leading-relaxed text-slate-200">
@@ -389,12 +710,38 @@ export function StatusAndVerifier({
                 <AlertTriangle className="h-3.5 w-3.5" />
                 {lookupResult.verdictLabel}
               </span>
-              {lookupResult.normalizedQuery && (
-                <span className="font-mono text-xs text-slate-400">
-                  Checked: {lookupResult.normalizedQuery.replace(/\./g, '[.]')}
-                </span>
-              )}
+              <div className="flex flex-wrap items-center gap-2">
+                {lookupResult.normalizedQuery && (
+                  <span className="font-mono text-xs text-slate-400">
+                    Checked: {lookupResult.normalizedQuery.replace(/\./g, '[.]')}
+                  </span>
+                )}
+                <button
+                  type="button"
+                  onClick={() => handleCopyPermalink(lookupResult.query)}
+                  className="inline-flex items-center gap-1 rounded border border-slate-700 bg-[#111827] px-2 py-1 font-mono text-[11px] text-slate-200 transition hover:border-slate-500 cursor-pointer"
+                >
+                  {copiedId === 'permalink' ? (
+                    <>
+                      <Check className="h-3 w-3 text-sky-400" /> Copied link
+                    </>
+                  ) : (
+                    <>
+                      <Link2 className="h-3 w-3" /> Copy verdict link
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
+
+            {normalizationInfo?.wasTransformed && (
+              <p className="mt-2 font-mono text-[11px] text-slate-300">
+                Normalized input →{' '}
+                <code className="rounded bg-[#111827] px-1.5 py-0.5 text-sky-300">
+                  {normalizationInfo.normalized}
+                </code>
+              </p>
+            )}
 
             <div className="mt-4 space-y-3">
               <p className="text-sm leading-relaxed text-slate-200">
@@ -437,6 +784,7 @@ export function StatusAndVerifier({
 
               <DefenseToolsPanel
                 variant="compact"
+                placement="verdict"
                 heading="Stay Protected Against Unlisted Lures"
               />
 
@@ -468,8 +816,8 @@ export function StatusAndVerifier({
         )}
       </div>
 
-      {/* Compact Page Navigation Cards (links to dedicated tools without crowding Lookup) */}
-      <div className="grid gap-3 sm:grid-cols-3">
+      {/* Compact Page Navigation Cards */}
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <button
           type="button"
           onClick={() => onNavigate('triage')}
@@ -510,6 +858,25 @@ export function StatusAndVerifier({
 
         <button
           type="button"
+          onClick={() => onNavigate('exports')}
+          className="flex flex-col justify-between rounded-xl border border-slate-800 bg-[#111827] p-4 text-left transition hover:border-slate-600 cursor-pointer"
+        >
+          <div>
+            <div className="flex items-center gap-2 text-xs font-mono text-slate-400">
+              <Database className="h-3.5 w-3.5 text-slate-300" />
+              <span>OPEN DATA</span>
+            </div>
+            <p className="mt-1.5 text-sm font-semibold text-slate-100">
+              Pi-hole Blocklist, CSV, JSON &amp; PowerShell Check
+            </p>
+          </div>
+          <span className="mt-3 inline-flex items-center gap-1 font-mono text-xs text-sky-400">
+            Open IOC exports <ArrowRight className="h-3 w-3" />
+          </span>
+        </button>
+
+        <button
+          type="button"
           onClick={() => onNavigate('export')}
           className="flex flex-col justify-between rounded-xl border border-slate-800 bg-[#111827] p-4 text-left transition hover:border-slate-600 cursor-pointer"
         >
@@ -531,6 +898,7 @@ export function StatusAndVerifier({
       {/* Homepage Recommended Protection Stack (above Removal Guides accordion) */}
       <DefenseToolsPanel
         variant="full"
+        placement="homepage"
         heading="Recommended Protection Stack"
         subheading="Rotate compromised logins and active sessions, block lookalike scam domains, and scan suspicious downloads."
       />

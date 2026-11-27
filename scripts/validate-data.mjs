@@ -114,10 +114,22 @@ function validateThreats(data, errors) {
       seenIds.add(entry.id);
     }
 
+    if (typeof entry.advisoryDate === 'string' && entry.advisoryDate.trim()) {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(entry.advisoryDate) || Number.isNaN(new Date(entry.advisoryDate).getTime())) {
+        errors.push(`${prefix}.advisoryDate "${entry.advisoryDate}" must be a valid YYYY-MM-DD ISO date`);
+      }
+    }
+
     if (typeof entry.advisoryUrl === 'string' && entry.advisoryUrl.trim()) {
-      if (!isAllowedVendorUrl(entry.advisoryUrl)) {
+      let isHttps = false;
+      try {
+        isHttps = new URL(entry.advisoryUrl).protocol === 'https:';
+      } catch {
+        isHttps = false;
+      }
+      if (!isHttps || !isAllowedVendorUrl(entry.advisoryUrl)) {
         errors.push(
-          `${prefix}.advisoryUrl "${entry.advisoryUrl}" is not on the strict vendor allowlist`,
+          `${prefix}.advisoryUrl "${entry.advisoryUrl}" must be an https:// URL on the strict vendor allowlist`,
         );
       }
     }
@@ -131,6 +143,11 @@ function validateThreats(data, errors) {
         if (norm.length < 3) {
           errors.push(`${prefix}.indicators[${j}] "${rawIndicator}" is too short`);
           continue;
+        }
+
+        // Enforce strict 64-char SHA-256 hex formatting for hash-like indicators
+        if (/^[a-f0-9]{32,128}$/i.test(norm) && !/^[a-f0-9]{64}$/.test(norm)) {
+          errors.push(`${prefix}.indicators[${j}] "${rawIndicator}" looks like an invalid SHA-256 hex length (${norm.length} chars)`);
         }
 
         if (isProtectedDomain(norm)) {
