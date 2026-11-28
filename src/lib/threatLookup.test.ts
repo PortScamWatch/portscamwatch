@@ -124,6 +124,10 @@ describe('PortScamWatch unit & integration suite', () => {
 
       const urlRes = lookupThreat('hxxps://GTA6Download[.]club/setup?ref=1', threatsData.threats);
       expect(urlRes.tier).toBe('CONFIRMED_THREAT');
+
+      const nkrnlRes = lookupThreat('nkrnl[.]cfd', threatsData.threats);
+      expect(nkrnlRes.tier).toBe('CONFIRMED_THREAT');
+      expect(nkrnlRes.matches[0]?.vendorName).toBe('Bitdefender');
     });
 
     it('resolves established/benign domains without false positives on lookalikes', () => {

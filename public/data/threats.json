@@ -437,6 +437,33 @@
       "vendorName": "ESET",
       "advisoryDate": "2026-11-13",
       "advisoryUrl": "https://www.welivesecurity.com/en/cybersecurity/gta-vi-isnt-out-yet-scams-full-swing/"
+    },
+    {
+      "id": "bitdefender-hotforsecurity-gta-vi-clickfix-nkrnl-2026-11-26",
+      "title": "GTA VI PC port hype is a gift to ClickFix attackers",
+      "severity": "CRITICAL",
+      "malwareFamily": "ClickFix PowerShell Loader / Infostealer",
+      "lureType": "ClickFix Fake GitHub Repo",
+      "displayIndicators": [
+        "nkrnl[.]cfd"
+      ],
+      "indicators": [
+        "nkrnl.cfd"
+      ],
+      "targetedData": [
+        "Browser credentials & session cookies",
+        "Gaming platform logins",
+        "Crypto wallet extensions",
+        "System/account data via elevated PowerShell execution"
+      ],
+      "hostArtifacts": [
+        "Elevated administrator PowerShell command fetching payload from nkrnl[.]cfd",
+        "Windows Security Defender exclusion added on victim host"
+      ],
+      "summary": "Two fake GitHub repositories mimicking a cracked GTA VI Windows build and an AI-assisted community PC port directed users to paste an administrator PowerShell command fetching and executing a likely infostealer payload from nkrnl[.]cfd (with one page advising users to add a Windows Security exclusion).",
+      "vendorName": "Bitdefender",
+      "advisoryDate": "2026-11-26",
+      "advisoryUrl": "https://www.bitdefender.com/en-us/blog/hotforsecurity/gta-vi-pc-port-hype-is-a-gift-to-clickfix-attackers"
     }
   ]
 }

@@ -57,7 +57,7 @@ const TOOL_CATALOG: Record<ActiveToolKey, Omit<ToolInfo, 'key' | 'url'>> = {
   },
   bitdefender: {
     name: 'Bitdefender',
-    shortLabel: 'Enable Bitdefender Shield',
+    shortLabel: 'Scan & Remove Infostealer Payloads',
     actionLabel: 'Enable ClickFix & Script-Shield Protection',
     category: 'ClickFix & Script Protection',
     description:
