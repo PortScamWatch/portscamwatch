@@ -1,7 +1,7 @@
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import {
   isAllowedVendorUrl,
   isProtectedDomain,
@@ -19,10 +19,14 @@ const ARTICLE_TIMEOUT_MS = 10_000;
 const MAX_ARTICLES_PER_RUN = 3;
 const MAX_ARTICLE_CHARS = 14_000;
 
-const VENDOR_FEEDS = [
+export const VENDOR_FEEDS = [
   {
     vendorName: 'Bitdefender Labs',
     url: 'https://www.bitdefender.com/nuxt/api/en-us/rss/labs/',
+  },
+  {
+    vendorName: 'Bitdefender',
+    url: 'https://www.bitdefender.com/blog/api/rss/hotforsecurity/',
   },
   {
     vendorName: 'Malwarebytes',
@@ -37,14 +41,15 @@ const VENDOR_FEEDS = [
     url: 'https://www.welivesecurity.com/en/rss/feed/',
   },
   {
-    vendorName: 'McAfee Labs',
-    url: 'https://www.mcafee.com/blogs/other-blogs/mcafee-labs/feed/',
+    vendorName: 'BleepingComputer',
+    url: 'https://www.bleepingcomputer.com/feed/',
   },
 ];
 
 function decodeXmlEntities(str) {
   return str
     .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1')
+    .replace(/&nbsp;/gi, ' ')
     .replace(/&amp;/g, '&')
     .replace(/&lt;/g, '<')
     .replace(/&gt;/g, '>')
@@ -81,7 +86,7 @@ function extractLink(xmlChunk) {
   return '';
 }
 
-function parseFeedItems(xmlText, vendorName) {
+export function parseFeedItems(xmlText, vendorName) {
   const items = [];
   const blockRegex = /<(item|entry)\b[^>]*>([\s\S]*?)<\/\1>/gi;
   let match;
@@ -104,9 +109,9 @@ function parseFeedItems(xmlText, vendorName) {
   return items;
 }
 
-function stripHtmlToPlainText(html) {
-  return decodeXmlEntities(
-    html
+export function stripHtmlToPlainText(html, maxChars = MAX_ARTICLE_CHARS) {
+  const plain = decodeXmlEntities(
+    String(html ?? '')
       .replace(/<script\b[\s\S]*?<\/script>/gi, ' ')
       .replace(/<style\b[\s\S]*?<\/style>/gi, ' ')
       .replace(/<noscript\b[\s\S]*?<\/noscript>/gi, ' ')
@@ -116,14 +121,17 @@ function stripHtmlToPlainText(html) {
   )
     .replace(/[ \t]+/g, ' ')
     .replace(/\n{3,}/g, '\n\n')
-    .trim()
-    .slice(0, MAX_ARTICLE_CHARS);
+    .trim();
+
+  return Number.isFinite(maxChars) ? plain.slice(0, maxChars) : plain;
 }
 
-function matchesGta6Topic(title, description) {
-  const text = stripHtmlToPlainText(`${title}\n${description}`);
+export function matchesGta6Topic(title, description = '') {
+  const text = stripHtmlToPlainText(`${title ?? ''}\n${description ?? ''}`, Infinity);
   const directMatch =
-    /\b(gta\s*6|gta\s*vi|grand\s+theft\s+auto\s*(6|vi)|leonida|gta6cloud)\b/i.test(text);
+    /\b(?:gta[\s:-]*(?:6|vi)|grand\s+theft\s+auto[\s:-]*(?:6|vi)|leonida|gta6cloud)\b/i.test(
+      text,
+    );
   const clickFixGtaMatch = /\bclickfix\b/i.test(text) && /\bgta\b/i.test(text);
   return directMatch || clickFixGtaMatch;
 }
@@ -150,6 +158,43 @@ async function fetchWithTimeout(url, timeoutMs) {
     });
   } finally {
     clearTimeout(timer);
+  }
+}
+
+async function fetchFeedResult(feed) {
+  const startedAt = Date.now();
+  try {
+    const res = await fetchWithTimeout(feed.url, FEED_TIMEOUT_MS);
+    const elapsedMs = Date.now() - startedAt;
+    if (!res.ok) {
+      return {
+        feed,
+        httpOk: false,
+        status: res.status,
+        items: [],
+        elapsedMs,
+        error: `HTTP ${res.status}`,
+      };
+    }
+    const xml = await res.text();
+    const items = parseFeedItems(xml, feed.vendorName);
+    return {
+      feed,
+      httpOk: true,
+      status: res.status,
+      items,
+      elapsedMs,
+      error: items.length === 0 ? 'HTTP 200 but 0 <item>/<entry> blocks parsed' : null,
+    };
+  } catch (err) {
+    return {
+      feed,
+      httpOk: false,
+      status: null,
+      items: [],
+      elapsedMs: Date.now() - startedAt,
+      error: err instanceof Error ? err.message : String(err),
+    };
   }
 }
 
@@ -195,6 +240,31 @@ function buildUniqueId(vendorName, title, advisoryDate, seenIds) {
     suffix += 1;
   }
   return candidate;
+}
+
+/**
+ * Prevents no-op timestamp commits by updating `meta.lastVerifiedUtc`
+ * only when at least one new verified threat advisory was appended.
+ */
+export function finalizeThreatsUpdate(
+  threatsData,
+  appendedCount,
+  nowIso = new Date().toISOString(),
+) {
+  if (appendedCount <= 0) {
+    return { shouldWrite: false, data: threatsData };
+  }
+  const cleanUtc = nowIso.replace(/\.\d{3}Z$/, 'Z');
+  return {
+    shouldWrite: true,
+    data: {
+      ...threatsData,
+      meta: {
+        ...threatsData.meta,
+        lastVerifiedUtc: cleanUtc,
+      },
+    },
+  };
 }
 
 async function extractThreatWithGemini(candidate, plainText) {
@@ -265,6 +335,7 @@ ${plainText}`;
 }
 
 async function main() {
+  const isCheckFeeds = process.argv.includes('--check-feeds');
   const isDryRun = process.argv.includes('--dry-run');
   const originalRaw = fs.readFileSync(THREATS_PATH, 'utf-8');
   const threatsData = JSON.parse(originalRaw);
@@ -280,43 +351,68 @@ async function main() {
     }
   }
 
-  let successfulFeeds = 0;
+  const feedResults = await Promise.all(VENDOR_FEEDS.map(fetchFeedResult));
+
+  let healthyFeeds = 0;
+  let reachableFeeds = 0;
   const candidates = [];
   const seenCandidateUrls = new Set();
 
-  for (const feed of VENDOR_FEEDS) {
-    try {
-      const res = await fetchWithTimeout(feed.url, FEED_TIMEOUT_MS);
-      if (!res.ok) {
-        console.warn(`[scout] Feed ${feed.vendorName} returned HTTP ${res.status}; skipping.`);
+  for (const result of feedResults) {
+    const { feed, httpOk, status, items, elapsedMs, error } = result;
+    if (httpOk) {
+      reachableFeeds += 1;
+    }
+
+    let feedNewMatches = 0;
+    for (const item of items) {
+      if (!isAllowedVendorUrl(item.link)) continue;
+      const normLink = normalizeUrlForDedup(item.link);
+      if (existingAdvisoryUrls.has(normLink) || seenCandidateUrls.has(normLink)) {
         continue;
       }
-      const xml = await res.text();
-      successfulFeeds += 1;
-      const items = parseFeedItems(xml, feed.vendorName);
-      console.log(`[scout] ${feed.vendorName}: parsed ${items.length} feed items.`);
-
-      for (const item of items) {
-        if (!isAllowedVendorUrl(item.link)) continue;
-        const normLink = normalizeUrlForDedup(item.link);
-        if (existingAdvisoryUrls.has(normLink) || seenCandidateUrls.has(normLink)) {
-          continue;
-        }
-        if (matchesGta6Topic(item.title, item.description)) {
-          seenCandidateUrls.add(normLink);
-          candidates.push(item);
-        }
+      if (matchesGta6Topic(item.title, item.description)) {
+        seenCandidateUrls.add(normLink);
+        candidates.push(item);
+        feedNewMatches += 1;
       }
-    } catch (err) {
-      console.warn(
-        `[scout] Feed ${feed.vendorName} failed gracefully: ${err instanceof Error ? err.message : String(err)}`,
-      );
     }
+
+    const isHealthy = httpOk && items.length > 0;
+    if (isHealthy) {
+      healthyFeeds += 1;
+    }
+
+    if (isCheckFeeds) {
+      if (isHealthy) {
+        console.log(
+          `[scout] CHECK OK | ${feed.vendorName} | HTTP ${status} | ${items.length} items | ${feedNewMatches} new GTA 6 candidate(s) | ${elapsedMs}ms`,
+        );
+      } else {
+        console.error(
+          `[scout] CHECK FAIL | ${feed.vendorName} | ${error || 'unknown error'} | ${elapsedMs}ms`,
+        );
+      }
+    } else if (!httpOk) {
+      console.warn(`[scout] Feed ${feed.vendorName} failed gracefully (${error}); skipping.`);
+    } else {
+      console.log(`[scout] ${feed.vendorName}: parsed ${items.length} feed items.`);
+    }
+  }
+
+  if (isCheckFeeds) {
+    console.log(
+      `[scout] --check-feeds summary: ${healthyFeeds}/${VENDOR_FEEDS.length} feeds reachable with >0 parsed items (${candidates.length} new GTA 6 candidate(s)). Skipped Gemini and disk writes.`,
+    );
+    if (healthyFeeds !== VENDOR_FEEDS.length) {
+      process.exitCode = 1;
+    }
+    return;
   }
 
   const cappedCandidates = candidates.slice(0, MAX_ARTICLES_PER_RUN);
   console.log(
-    `[scout] Feeds reachable: ${successfulFeeds}/${VENDOR_FEEDS.length}. New GTA 6 candidates: ${cappedCandidates.length}.`,
+    `[scout] Feeds reachable: ${reachableFeeds}/${VENDOR_FEEDS.length}. New GTA 6 candidates: ${cappedCandidates.length}.`,
   );
 
   let appendedCount = 0;
@@ -369,13 +465,20 @@ async function main() {
         }
 
         if (cleanIndicators.length === 0) {
-          console.log('[scout] Skipped candidate after deterministic IOC filtering (0 valid new IOCs).');
+          console.log(
+            '[scout] Skipped candidate after deterministic IOC filtering (0 valid new IOCs).',
+          );
           continue;
         }
 
         const advisoryDate = formatAdvisoryDate(candidate.pubDate);
         const newEntry = {
-          id: buildUniqueId(candidate.vendorName, extracted.title || candidate.title, advisoryDate, existingIds),
+          id: buildUniqueId(
+            candidate.vendorName,
+            extracted.title || candidate.title,
+            advisoryDate,
+            existingIds,
+          ),
           title: String(extracted.title || candidate.title).trim(),
           severity: extracted.severity === 'HIGH' ? 'HIGH' : 'CRITICAL',
           malwareFamily: String(extracted.malwareFamily || 'Infostealer / Fake Port Lure').trim(),
@@ -402,7 +505,9 @@ async function main() {
           existingIndicators.add(norm);
         }
         appendedCount += 1;
-        console.log(`[scout] Appended new advisory: ${newEntry.id} (${cleanIndicators.length} IOCs)`);
+        console.log(
+          `[scout] Appended new advisory: ${newEntry.id} (${cleanIndicators.length} IOCs)`,
+        );
       } catch (err) {
         console.warn(
           `[scout] Error processing candidate "${candidate.link}": ${err instanceof Error ? err.message : String(err)}`,
@@ -411,10 +516,12 @@ async function main() {
     }
   }
 
-  if (successfulFeeds > 0) {
-    threatsData.meta.lastVerifiedUtc = new Date().toISOString().replace(/\.\d{3}Z$/, 'Z');
-  } else {
-    console.warn('[scout] Zero feeds responded cleanly; leaving meta.lastVerifiedUtc unchanged.');
+  const finalized = finalizeThreatsUpdate(threatsData, appendedCount);
+  if (!finalized.shouldWrite) {
+    console.log(
+      '[scout] No new verified threat advisories appended (0 added); leaving public/data/threats.json untouched.',
+    );
+    return;
   }
 
   if (isDryRun) {
@@ -424,7 +531,7 @@ async function main() {
     return;
   }
 
-  const nextRaw = `${JSON.stringify(threatsData, null, 2)}\n`;
+  const nextRaw = `${JSON.stringify(finalized.data, null, 2)}\n`;
   fs.writeFileSync(THREATS_PATH, nextRaw, 'utf-8');
 
   try {
@@ -437,7 +544,18 @@ async function main() {
   }
 }
 
-main().catch((err) => {
-  console.error('[scout] Fatal error:', err);
-  process.exit(1);
-});
+let isDirectRun = false;
+try {
+  isDirectRun =
+    Boolean(process.argv[1]) &&
+    pathToFileURL(fs.realpathSync(process.argv[1])).href === import.meta.url;
+} catch {
+  isDirectRun = false;
+}
+
+if (isDirectRun) {
+  main().catch((err) => {
+    console.error('[scout] Fatal error:', err);
+    process.exit(1);
+  });
+}

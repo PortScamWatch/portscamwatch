@@ -5,6 +5,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { App } from '../App';
 import { DefenseToolsPanel } from './DefenseToolsPanel';
+import { MethodologySection } from './MethodologySection';
 import { TriageWizard } from './TriageWizard';
 import type { DisclaimersData, ThreatsData, TriageTreeData } from '../types/data';
 
@@ -167,5 +168,15 @@ describe('React UI & Component Tests', () => {
     const links = Array.from(panel.querySelectorAll('a'));
     expect(links.length).toBe(2);
     expect(links[0].getAttribute('href')).toContain('aff_sub=psw_triage');
+  });
+
+  it('MethodologySection accurately discloses Bitdefender, NordVPN, NordPass, Coveron and benign hiding rule', () => {
+    render(<MethodologySection />);
+    expect(screen.getByText(/Bitdefender Labs & Hot for Security/i)).toBeTruthy();
+    expect(screen.getByText(/BleepingComputer/i)).toBeTruthy();
+    expect(screen.queryByText(/McAfee/i)).toBeNull();
+    expect(screen.getByText(/Bitdefender, NordVPN, NordPass, and Coveron/i)).toBeTruthy();
+    expect(screen.getByText(/never influence threat verdicts/i)).toBeTruthy();
+    expect(screen.getByText(/hidden on benign or established domain checks/i)).toBeTruthy();
   });
 });

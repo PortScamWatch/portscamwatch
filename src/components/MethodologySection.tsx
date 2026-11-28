@@ -76,10 +76,12 @@ export function MethodologySection() {
               3. Automated Scout Verification Guardrails
             </h3>
             <p className="mt-2 text-xs leading-relaxed text-slate-300">
-              Our scheduled 6-hour GitHub Actions scout polls allowlisted security vendor feeds
-              (Bitdefender, Malwarebytes, Darktrace, ESET, McAfee) and extracts vendor-published
-              IOCs append-only. Deterministic validation rejects non-allowlisted URLs, duplicates,
-              invalid SHA-256 strings, and protected platforms before committing to{' '}
+              Our scheduled 6-hour GitHub Actions scout polls allowlisted security feeds
+              (Bitdefender Labs &amp; Hot for Security, Malwarebytes, Darktrace, ESET
+              WeLiveSecurity, and BleepingComputer) and extracts vendor-published IOCs append-only,
+              updating <code className="text-slate-100">threats.json</code> only when a new
+              verified advisory is added. Deterministic validation rejects non-allowlisted URLs,
+              duplicates, invalid SHA-256 strings, and protected platforms before committing to{' '}
               <code className="text-slate-100">main</code>.
             </p>
           </div>
@@ -90,9 +92,9 @@ export function MethodologySection() {
             </h3>
             <p className="mt-2 text-xs leading-relaxed text-slate-300">
               PortScamWatch is a free, static, zero-ad tool supported solely by clearly labeled
-              affiliate links (currently NordVPN, NordPass, and Coveron while additional security
-              vendor reviews are pending). Affiliate relationships never influence threat verdicts,
-              vendor citations, or database entries.
+              affiliate links (Bitdefender, NordVPN, NordPass, and Coveron). Affiliate links never
+              influence threat verdicts, vendor citations, or database entries, and are hidden on
+              benign or established domain checks.
             </p>
           </div>
         </div>
