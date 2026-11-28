@@ -266,6 +266,14 @@ describe('PortScamWatch unit & integration suite', () => {
         'https://go.nordpass.io/aff_c?offer_id=488&aff_id=162042&url_id=9356&aff_sub=psw_triage',
       );
 
+      const coveronUrl = buildAffiliateUrl(
+        'https://go.coveron.net/aff_c?offer_id=77&aff_id=162042&url_id=555',
+        'homepage',
+      );
+      expect(coveronUrl).toBe(
+        'https://go.coveron.net/aff_c?offer_id=77&aff_id=162042&url_id=555&aff_sub=psw_homepage',
+      );
+
       // Non-Nord URLs are preserved unmodified
       expect(buildAffiliateUrl('https://www.malwarebytes.com/?partner=1', 'guide')).toBe(
         'https://www.malwarebytes.com/?partner=1',
@@ -273,15 +281,19 @@ describe('PortScamWatch unit & integration suite', () => {
 
       expect(getConfiguredTools('homepage', {})).toEqual([]);
       expect(getToolInfo('nordvpn', 'verdict', {})).toBeNull();
+      expect(getToolInfo('coveron', 'verdict', {})).toBeNull();
       expect(isValidHttpsUrl('http://insecure.example.com')).toBeUndefined();
 
       const configured = getConfiguredTools('guide', {
         VITE_NORDPASS_URL: 'https://go.nordpass.io/aff_c?offer_id=488&aff_id=162042&url_id=9356',
         VITE_NORDVPN_URL: 'https://go.nordvpn.net/aff_c?offer_id=15&aff_id=162042&url_id=902',
+        VITE_COVERON_URL: 'https://go.coveron.net/aff_c?offer_id=77&aff_id=162042&url_id=555',
       });
-      expect(configured.map((t) => t.key)).toEqual(['nordpass', 'nordvpn']);
+      expect(configured.map((t) => t.key)).toEqual(['nordpass', 'nordvpn', 'coveron']);
+      expect(configured[2]?.badgeTag).toBe('(US)');
       expect(configured[0]?.url).toContain('aff_sub=psw_guide');
       expect(configured[1]?.url).toContain('aff_sub=psw_guide');
+      expect(configured[2]?.url).toContain('aff_sub=psw_guide');
     });
 
     it('formats timestamps, badges, and computes triage severity safely', () => {
@@ -319,7 +331,7 @@ describe('PortScamWatch unit & integration suite', () => {
       const affiliatePatterns = [
         /[?&](aff_id|affiliate_id|subid|clickid|partner_id)=/i,
         /162042/,
-        /https?:\/\/go\.(nordvpn\.net|nordpass\.io)/i,
+        /https?:\/\/go\.(nordvpn\.net|nordpass\.io|coveron\.net)/i,
       ];
 
       for (const file of files) {

@@ -150,7 +150,7 @@ async function runDesktopChecks(browser, baseUrl) {
       '[data-testid="defense-tools-full-homepage"] a[rel="noopener noreferrer sponsored"]',
     );
     const homeLinkCount = await homeLinks.count();
-    assert.equal(homeLinkCount, 2, 'Expected 2 configured Nord links on homepage');
+    assert.equal(homeLinkCount, 3, 'Expected 3 configured protection links (NordPass, NordVPN, Coveron) on homepage');
     for (let i = 0; i < homeLinkCount; i += 1) {
       const href = await homeLinks.nth(i).getAttribute('href');
       assert.ok(href?.includes('aff_id=162042'), 'Expected aff_id=162042');
@@ -167,8 +167,12 @@ async function runDesktopChecks(browser, baseUrl) {
     const verdictLinks = page.locator(
       '[data-testid="defense-tools-compact-verdict"] a[rel="noopener noreferrer sponsored"]',
     );
-    assert.equal(await verdictLinks.count(), 2);
+    assert.equal(await verdictLinks.count(), 3);
     assert.ok((await verdictLinks.first().getAttribute('href'))?.includes('aff_sub=psw_verdict'));
+    const coveronVerdictHref = await page
+      .locator('[data-testid="defense-tools-compact-verdict"] a[data-tool-key="coveron"]')
+      .getAttribute('href');
+    assert.ok(coveronVerdictHref?.includes('aff_sub=psw_verdict'), 'Expected aff_sub=psw_verdict on Coveron');
     await page.getByRole('button', { name: /Copy verdict link/i }).waitFor();
 
     // 3. Defanged malicious domain lookup (velmontriq[.]net)
@@ -295,7 +299,7 @@ async function main() {
   let serveDir = DIST_DIR;
   let builtTempDir = false;
 
-  if (process.env.VITE_NORDVPN_URL && process.env.VITE_NORDPASS_URL) {
+  if (process.env.VITE_NORDVPN_URL && process.env.VITE_NORDPASS_URL && process.env.VITE_COVERON_URL) {
     fs.rmSync(E2E_DIST_DIR, { recursive: true, force: true });
     execSync(`npx vite build --outDir "${E2E_DIST_DIR}"`, {
       cwd: ROOT_DIR,

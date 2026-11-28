@@ -25,6 +25,14 @@ export function DefenseToolsPanel({
   }
 
   if (variant === 'compact') {
+    const compactColsClass =
+      tools.length === 1
+        ? 'sm:grid-cols-1'
+        : tools.length === 3 && placement === 'verdict'
+          ? 'md:grid-cols-3'
+          : 'sm:grid-cols-2';
+    const spanOddLast = tools.length === 3 && placement !== 'verdict';
+
     return (
       <div
         data-testid={`defense-tools-compact-${placement}`}
@@ -37,19 +45,26 @@ export function DefenseToolsPanel({
           </div>
         )}
 
-        <div className="grid gap-2 sm:grid-cols-2">
-          {tools.map((tool) => (
+        <div className={`grid gap-2 ${compactColsClass}`}>
+          {tools.map((tool, idx) => (
             <a
               key={tool.key}
               href={tool.url}
               target="_blank"
               rel="noopener noreferrer sponsored"
               data-tool-key={tool.key}
-              className="group flex min-w-0 items-center justify-between gap-2.5 rounded-md border border-slate-700/90 bg-[#111827] px-3 py-2.5 text-left transition hover:border-sky-500/60 hover:bg-slate-800/80"
+              className={`group flex min-w-0 items-center justify-between gap-2.5 rounded-md border border-slate-700/90 bg-[#111827] px-3 py-2.5 text-left transition hover:border-sky-500/60 hover:bg-slate-800/80 ${
+                spanOddLast && idx === tools.length - 1 ? 'sm:col-span-2' : ''
+              }`.trim()}
             >
               <div className="min-w-0 flex-1">
                 <p className="truncate text-xs font-semibold text-slate-100 group-hover:text-white">
                   {tool.name}
+                  {tool.badgeTag && (
+                    <span className="ml-1.5 font-mono text-[10px] font-normal text-slate-400">
+                      {tool.badgeTag}
+                    </span>
+                  )}
                 </p>
                 <p className="truncate font-mono text-[10px] text-slate-400">
                   {tool.shortLabel}
@@ -73,7 +88,7 @@ export function DefenseToolsPanel({
       : tools.length === 2
         ? 'sm:grid-cols-2'
         : tools.length === 3
-          ? 'sm:grid-cols-3'
+          ? 'md:grid-cols-3'
           : 'sm:grid-cols-2 lg:grid-cols-4';
 
   return (
@@ -106,7 +121,14 @@ export function DefenseToolsPanel({
               <span className="font-mono text-[10px] uppercase tracking-wider text-sky-400">
                 {tool.category}
               </span>
-              <h3 className="mt-1 text-sm font-bold text-slate-100">{tool.name}</h3>
+              <h3 className="mt-1 text-sm font-bold text-slate-100">
+                {tool.name}
+                {tool.badgeTag && (
+                  <span className="ml-1.5 font-mono text-xs font-normal text-slate-400">
+                    {tool.badgeTag}
+                  </span>
+                )}
+              </h3>
               <p className="mt-1.5 text-xs leading-relaxed text-slate-300">
                 {tool.description}
               </p>

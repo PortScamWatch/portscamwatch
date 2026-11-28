@@ -1,11 +1,12 @@
 import type { RecommendedToolKey } from '../types/data';
 
-export type ActiveToolKey = Exclude<RecommendedToolKey, 'none'>;
+export type ActiveToolKey = Exclude<RecommendedToolKey, 'none'> | 'coveron';
 export type AffiliatePlacement = 'verdict' | 'homepage' | 'guide' | 'triage';
 
 export interface ToolInfo {
   key: ActiveToolKey;
   name: string;
+  badgeTag?: string;
   shortLabel: string;
   actionLabel: string;
   category: string;
@@ -15,7 +16,11 @@ export interface ToolInfo {
 
 const DEFAULT_SITE_DOMAIN = 'portscamwatch.com';
 
-const NORD_TRACKING_HOSTS = new Set(['go.nordvpn.net', 'go.nordpass.io']);
+const NORD_TRACKING_HOSTS = new Set([
+  'go.nordvpn.net',
+  'go.nordpass.io',
+  'go.coveron.net',
+]);
 
 const TOOL_CATALOG: Record<ActiveToolKey, Omit<ToolInfo, 'key' | 'url'>> = {
   nordpass: {
@@ -33,6 +38,15 @@ const TOOL_CATALOG: Record<ActiveToolKey, Omit<ToolInfo, 'key' | 'url'>> = {
     category: 'Phishing & Download Shield',
     description:
       'Threat Protection Pro blocks newly registered scam domains and scans downloaded binaries before execution, even without an active VPN tunnel.',
+  },
+  coveron: {
+    name: 'Coveron',
+    badgeTag: '(US)',
+    shortLabel: 'Monitor Stolen Identity & Malware Breaches',
+    actionLabel: 'Monitor Stolen Identity & Malware Breaches',
+    category: 'Identity & Malware Breach Monitoring',
+    description:
+      'Built by Nord Security for US residents: tracks infostealer-leaked credentials and cards on the dark web with malware breach alerts, credit monitoring, and identity/fraud recovery.',
   },
   malwarebytes: {
     name: 'Malwarebytes',
@@ -54,11 +68,18 @@ const TOOL_CATALOG: Record<ActiveToolKey, Omit<ToolInfo, 'key' | 'url'>> = {
 const TOOL_ENV_KEY: Record<ActiveToolKey, string> = {
   nordpass: 'VITE_NORDPASS_URL',
   nordvpn: 'VITE_NORDVPN_URL',
+  coveron: 'VITE_COVERON_URL',
   malwarebytes: 'VITE_MALWAREBYTES_URL',
   bitdefender: 'VITE_BITDEFENDER_URL',
 };
 
-const TOOL_ORDER: ActiveToolKey[] = ['nordpass', 'nordvpn', 'malwarebytes', 'bitdefender'];
+const TOOL_ORDER: ActiveToolKey[] = [
+  'nordpass',
+  'nordvpn',
+  'coveron',
+  'malwarebytes',
+  'bitdefender',
+];
 
 function readEnvString(value: unknown): string | undefined {
   if (typeof value !== 'string') return undefined;
@@ -110,6 +131,8 @@ function readRawEnvValue(
       return import.meta.env.VITE_NORDPASS_URL;
     case 'VITE_NORDVPN_URL':
       return import.meta.env.VITE_NORDVPN_URL;
+    case 'VITE_COVERON_URL':
+      return import.meta.env.VITE_COVERON_URL;
     case 'VITE_MALWAREBYTES_URL':
       return import.meta.env.VITE_MALWAREBYTES_URL;
     case 'VITE_BITDEFENDER_URL':
@@ -127,7 +150,7 @@ export function getSiteDomain(metaFallback?: string): string {
 }
 
 export function getToolInfo(
-  key: RecommendedToolKey | string | null | undefined,
+  key: RecommendedToolKey | ActiveToolKey | string | null | undefined,
   placement: AffiliatePlacement = 'triage',
   envOverride?: Record<string, string | undefined>,
 ): ToolInfo | null {

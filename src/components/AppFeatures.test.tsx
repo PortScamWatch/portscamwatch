@@ -31,9 +31,10 @@ describe('React UI & Component Tests', () => {
     vi.restoreAllMocks();
   });
 
-  it('DefenseToolsPanel hides completely when env vars are unset and renders 2-col Nord grid when configured', () => {
+  it('DefenseToolsPanel hides completely when env vars are unset and renders 3-card Nord + Coveron stack when configured', () => {
     vi.stubEnv('VITE_NORDVPN_URL', '');
     vi.stubEnv('VITE_NORDPASS_URL', '');
+    vi.stubEnv('VITE_COVERON_URL', '');
     vi.stubEnv('VITE_MALWAREBYTES_URL', '');
     vi.stubEnv('VITE_BITDEFENDER_URL', '');
 
@@ -51,10 +52,26 @@ describe('React UI & Component Tests', () => {
       'VITE_NORDVPN_URL',
       'https://go.nordvpn.net/aff_c?offer_id=15&aff_id=162042&url_id=902',
     );
+    vi.stubEnv(
+      'VITE_COVERON_URL',
+      'https://go.coveron.net/aff_c?offer_id=77&aff_id=162042&url_id=555',
+    );
+
+    const { unmount: unmountFull } = render(
+      <DefenseToolsPanel variant="full" placement="homepage" />,
+    );
+    const fullLinks = screen.getAllByRole('link');
+    expect(fullLinks).toHaveLength(3);
+    expect(screen.getByText('(US)')).toBeTruthy();
+    expect(screen.getByText('Monitor Stolen Identity & Malware Breaches')).toBeTruthy();
+    for (const link of fullLinks) {
+      expect(link.getAttribute('href')).toContain('aff_sub=psw_homepage');
+    }
+    unmountFull();
 
     render(<DefenseToolsPanel variant="compact" placement="verdict" heading="Immediate Containment" />);
     const links = screen.getAllByRole('link');
-    expect(links).toHaveLength(2);
+    expect(links).toHaveLength(3);
     for (const link of links) {
       expect(link.getAttribute('target')).toBe('_blank');
       expect(link.getAttribute('rel')).toBe('noopener noreferrer sponsored');

@@ -90,9 +90,9 @@ export function MethodologySection() {
             </h3>
             <p className="mt-2 text-xs leading-relaxed text-slate-300">
               PortScamWatch is a free, static, zero-ad tool supported solely by clearly labeled
-              affiliate links (currently NordVPN and NordPass while additional security vendor
-              reviews are pending). Affiliate relationships never influence threat verdicts, vendor
-              citations, or database entries.
+              affiliate links (currently NordVPN, NordPass, and Coveron while additional security
+              vendor reviews are pending). Affiliate relationships never influence threat verdicts,
+              vendor citations, or database entries.
             </p>
           </div>
         </div>

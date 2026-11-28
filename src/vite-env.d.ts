@@ -6,6 +6,7 @@ interface ImportMetaEnv {
   readonly VITE_BITDEFENDER_URL?: string;
   readonly VITE_NORDVPN_URL?: string;
   readonly VITE_NORDPASS_URL?: string;
+  readonly VITE_COVERON_URL?: string;
 }
 
 interface ImportMeta {
